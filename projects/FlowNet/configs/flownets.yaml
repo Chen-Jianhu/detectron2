@@ -1,0 +1,4 @@
+_BASE_: Base-FlowNet.yaml
+MODEL:
+  FLOWNET:
+    NAME: "FlowNetS"

@@ -1,0 +1,5 @@
+_BASE_: ../../configs/Base-FlowNet.yaml
+MODEL:
+  FLOWNET:
+    NAME: "FlowNetS"
+    NORM: "BN"

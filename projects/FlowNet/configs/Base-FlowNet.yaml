@@ -1,0 +1,28 @@
+MODEL:
+  FLOWNET:
+    NAME: "FlowNetS"
+    PIXEL_MEAN: [0.45, 0.432, 0.411]
+    PIXEL_STD: [1, 1, 1]
+    NORM: ""
+    NEGATIVE_SLOPE: 0.1
+    MULTISCALE_WEIGHTS: [0.005, 0.01, 0.02, 0.08, 0.32]
+    FLOW_DIV: 20.0
+DATASETS:
+  TRAIN: ("flying_chairs_train",)
+  TEST: ("flying_chairs_test",)
+SOLVER:
+  IMS_PER_BATCH: 8
+  BASE_LR: 0.0001
+  STEPS: (300000, 400000)
+  MAX_ITER: 500000
+  GAMMA: 0.5
+  OPTIMIZER:
+    NAME: "Adam"
+    BETAS: (0.9, 0.999)
+    AMSGRAD: False
+INPUT:
+  TRANSFORMS: ()
+TEST:
+  EVAL_PERIOD: 20000
+VIS_PERIOD: 5000
+VERSION: 2

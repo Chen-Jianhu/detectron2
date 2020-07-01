@@ -1,0 +1,11 @@
+_BASE_: ../../configs/Base-FlowNet.yaml
+MODEL:
+  FLOWNET:
+    NAME: "FlowNetS"
+    NORM: "BN"
+SOLVER:
+  IMS_PER_BATCH: 32
+  BASE_LR: 0.0004
+  STEPS: (25000, 37500)
+  MAX_ITER: 50000
+  CHECKPOINT_PERIOD: 500

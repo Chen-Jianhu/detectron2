@@ -1,0 +1,7 @@
+_BASE_: ../../configs/Base-FlowNet.yaml
+MODEL:
+  FLOWNET:
+    NAME: "FlowNetS"
+    NORM: "BN"
+SOLVER:
+  IMS_PER_BATCH: 32
