@@ -1,10 +1,17 @@
-# -*- coding: utf-8 -*-
+# -*- encoding: utf-8 -*-
 """
-This script is used for split Flying Chairs dataset.
+@File          :   flying_chairs_split.py
+@Time          :   2020/07/01 8:31:48
+@Author        :   Facebook, Inc. and its affiliates.
+@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
+@Last Modified :   2020/07/01 10:22:58
+@License       :   Copyright(C), USTC
+@Desc          :   This script is used for split Flying Chairs dataset.
 
 Usage:
     python flying_chairs_split.py
 """
+
 import os.path as osp
 import glob
 import json
