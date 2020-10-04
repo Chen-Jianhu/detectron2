@@ -5,15 +5,10 @@ import os
 import sys
 import tempfile
 from contextlib import contextmanager
-from typing import Dict
 import torch
 
-# fmt: off
-from detectron2.modeling.proposal_generator import RPN
 # need an explicit import due to https://github.com/pytorch/pytorch/issues/38964
 from detectron2.structures import Boxes, Instances  # noqa F401
-
-# fmt: on
 
 _counter = 0
 
@@ -43,6 +38,11 @@ def export_torchscript_with_instances(model, fields):
             fields = {"proposal_boxes": "Boxes", "objectness_logits": "Tensor"}
             torchscipt_model =  export_torchscript_with_instances(model, fields)
 
+    Note:
+        Currently we only support models in evaluation mode. Exporting models in training mode
+        or running inference processes of torchscripts that are exported from models in training
+        mode may encounter unexpected errors.
+
     Args:
         model (nn.Module): The input model to be exported to torchscript.
         fields (Dict[str, str]): Attribute names and corresponding type annotations that
@@ -53,15 +53,12 @@ def export_torchscript_with_instances(model, fields):
     Returns:
         torch.jit.ScriptModule: the input model in torchscript format
     """
+
+    assert (
+        not model.training
+    ), "Currently we only support exporting models in evaluation mode to torchscript"
+
     with patch_instances(fields):
-
-        # Also add some other hacks for torchscript:
-        # boolean as dictionary keys is unsupported:
-        # https://github.com/pytorch/pytorch/issues/41449
-        # We annotate it this way to let torchscript interpret them as integers.
-        RPN.__annotations__["pre_nms_topk"] = Dict[int, int]
-        RPN.__annotations__["post_nms_topk"] = Dict[int, int]
-
         scripted_model = torch.jit.script(model)
         return scripted_model
 
@@ -98,12 +95,13 @@ def patch_instances(fields):
 # TODO: find a more automatic way to enable import of other classes
 def _gen_imports():
     imports_str = """
+from copy import deepcopy
 import torch
 from torch import Tensor
 import typing
 from typing import *
 
-from detectron2.structures import Boxes
+from detectron2.structures import Boxes, Instances
 
 """
     return imports_str
@@ -129,9 +127,80 @@ class {cls_name}:
     )
 
     for name, type_ in fields.items():
-        lines.append(indent(2, f"self.{name} = torch.jit.annotate(Optional[{type_}], None)"))
-    # TODO add getter/setter when @property is supported
+        lines.append(indent(2, f"self._{name} = torch.jit.annotate(Optional[{type_}], None)"))
 
+    for name, type_ in fields.items():
+        lines.append(
+            f"""
+    @property
+    def {name}(self) -> {type_}:
+        # has to use a local for type refinement
+        # https://pytorch.org/docs/stable/jit_language_reference.html#optional-type-refinement
+        t = self._{name}
+        assert t is not None
+        return t
+
+    @{name}.setter
+    def {name}(self, value: {type_}) -> None:
+        self._{name} = value
+"""
+        )
+
+    # support function attribute `__len__`
+    lines.append(
+        """
+    def __len__(self) -> int:
+"""
+    )
+    for name, _ in fields.items():
+        lines.append(
+            f"""
+        t = self._{name}
+        if t is not None:
+            return len(t)
+"""
+        )
+    lines.append(
+        """
+        raise NotImplementedError("Empty Instances does not support __len__!")
+"""
+    )
+
+    # support function attribute `has`
+    lines.append(
+        """
+    def has(self, name: str) -> bool:
+"""
+    )
+    for name, _ in fields.items():
+        lines.append(
+            f"""
+        if name == "{name}":
+            return self._{name} is not None
+"""
+        )
+    lines.append(
+        """
+        return False
+"""
+    )
+
+    # support function attribute `from_instances`
+    lines.append(
+        f"""
+    @torch.jit.unused
+    @staticmethod
+    def from_instances(instances: Instances) -> "{cls_name}":
+        fields = instances.get_fields()
+        image_size = instances.image_size
+        new_instances = {cls_name}(image_size)
+        for name, val in fields.items():
+            assert hasattr(new_instances, '_{{}}'.format(name)), \\
+                "No attribute named {{}} in {cls_name}".format(name)
+            setattr(new_instances, name, deepcopy(val))
+        return new_instances
+"""
+    )
     return cls_name, os.linesep.join(lines)
 
 

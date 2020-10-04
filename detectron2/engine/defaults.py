@@ -227,7 +227,7 @@ class DefaultPredictor:
 class DefaultTrainer(SimpleTrainer):
     """
     A trainer with default training logic.
-    It is a subclass of `SimpleTrainer` which instantiates everything needed from the
+    It is a subclass of :class:`SimpleTrainer` and instantiates everything needed from the
     config. It does the following:
 
     1. Create model, optimizer, scheduler, dataloader from the given config.
@@ -241,7 +241,7 @@ class DefaultTrainer(SimpleTrainer):
     may easily become invalid in a new research. In fact, any assumptions beyond those made in the
     :class:`SimpleTrainer` are too much for research.
 
-    The code of this class has been annotated about restrictive assumptions it mades.
+    The code of this class has been annotated about restrictive assumptions it makes.
     When they do not work for you, you're encouraged to:
 
     1. Overwrite methods of this class, OR:
@@ -249,7 +249,9 @@ class DefaultTrainer(SimpleTrainer):
        nothing else. You can then add your own hooks if needed. OR:
     3. Write your own training loop similar to `tools/plain_train_net.py`.
 
-    Also note that the behavior of this class, like other functions/classes in
+    See the :doc:`/tutorials/training` tutorials for more details.
+
+    Note that the behavior of this class, like other functions/classes in
     this file, is not stable, since it is meant to represent the "common default behavior".
     It is only guaranteed to work well with the standard models and training workflow in detectron2.
     To obtain more stable behavior, write your own training logic with other public APIs.
@@ -306,7 +308,8 @@ class DefaultTrainer(SimpleTrainer):
     def resume_or_load(self, resume=True):
         """
         If `resume==True`, and last checkpoint exists, resume from it, load all checkpointables
-        (eg. optimizer and scheduler) and update iteration counter.
+        (eg. optimizer and scheduler) and update iteration counter from it. ``cfg.MODEL.WEIGHTS``
+        will not be used.
 
         Otherwise, load the model specified by the config (skip all checkpointables) and start from
         the first iteration.
@@ -502,7 +505,7 @@ Alternatively, you can call evaluation functions yourself (see Colab balloon tut
             model (nn.Module):
             evaluators (list[DatasetEvaluator] or None): if None, will call
                 :meth:`build_evaluator`. Otherwise, must have the same length as
-                `cfg.DATASETS.TEST`.
+                ``cfg.DATASETS.TEST``.
 
         Returns:
             dict: a dict of result metrics
@@ -560,10 +563,34 @@ Alternatively, you can call evaluation functions yourself (see Colab balloon tut
         * training steps and warmup steps are scaled inverse proportionally.
         * learning rate are scaled proportionally, following :paper:`ImageNet in 1h`.
 
-        It returns the original config if ``cfg.SOLVER.REFERENCE_WORLD_SIZE==0``.
+        For example, with the original config like the following:
+
+        .. code-block:: yaml
+
+            IMS_PER_BATCH: 16
+            BASE_LR: 0.1
+            REFERENCE_WORLD_SIZE: 8
+            MAX_ITER: 5000
+            STEPS: (4000,)
+            CHECKPOINT_PERIOD: 1000
+
+        When this config is used on 16 GPUs instead of the reference number 8,
+        calling this method will return a new config with:
+
+        .. code-block:: yaml
+
+            IMS_PER_BATCH: 32
+            BASE_LR: 0.2
+            REFERENCE_WORLD_SIZE: 16
+            MAX_ITER: 2500
+            STEPS: (2000,)
+            CHECKPOINT_PERIOD: 500
+
+        Note that both the original config and this new config can be trained on 16 GPUs.
+        It's up to user whether to enable this feature (by setting ``REFERENCE_WORLD_SIZE``).
 
         Returns:
-            CfgNode: a new config
+            CfgNode: a new config. Same as original if ``cfg.SOLVER.REFERENCE_WORLD_SIZE==0``.
         """
         old_world_size = cfg.SOLVER.REFERENCE_WORLD_SIZE
         if old_world_size == 0 or old_world_size == num_workers:
@@ -582,6 +609,7 @@ Alternatively, you can call evaluation functions yourself (see Colab balloon tut
         warmup_iter = cfg.SOLVER.WARMUP_ITERS = int(round(cfg.SOLVER.WARMUP_ITERS / scale))
         cfg.SOLVER.STEPS = tuple(int(round(s / scale)) for s in cfg.SOLVER.STEPS)
         cfg.TEST.EVAL_PERIOD = int(round(cfg.TEST.EVAL_PERIOD / scale))
+        cfg.SOLVER.CHECKPOINT_PERIOD = int(round(cfg.SOLVER.CHECKPOINT_PERIOD / scale))
         cfg.SOLVER.REFERENCE_WORLD_SIZE = num_workers  # maintain invariant
         logger = logging.getLogger(__name__)
         logger.info(
