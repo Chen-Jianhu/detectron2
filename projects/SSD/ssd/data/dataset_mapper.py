@@ -79,7 +79,8 @@ class DatasetMapper:
         self.recompute_boxes = recompute_boxes
         # fmt: on
         logger = logging.getLogger(__name__)
-        logger.info("Augmentations used in training: " + str(augmentations))
+        mode = "training" if is_train else "inference"
+        logger.info(f"Augmentations used in {mode}: {augmentations}")
 
     @classmethod
     def from_config(cls, cfg, is_train: bool = True):
@@ -130,7 +131,10 @@ class DatasetMapper:
             sem_seg_gt = None
 
         # MinIoURandomCrop need bbox annotations
-        boxes = np.stack([anno["bbox"] for anno in dataset_dict["annotations"]])
+        if self.is_train:
+            boxes = np.stack([anno["bbox"] for anno in dataset_dict["annotations"]])
+        else:
+            boxes = None
         aug_input = T.StandardAugInput(image, boxes=boxes, sem_seg=sem_seg_gt)
         transforms = aug_input.apply_augmentations(self.augmentations)
         image, sem_seg_gt = aug_input.image, aug_input.sem_seg

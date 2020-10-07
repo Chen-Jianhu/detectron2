@@ -39,6 +39,7 @@ from detectron2.evaluation import (
 )
 from detectron2.modeling import GeneralizedRCNNWithTTA
 from detectron2.data import build_detection_train_loader, build_detection_test_loader
+from detectron2.utils.logger import setup_logger
 
 from ssd.config import add_ssd_config
 from ssd.data import detection_utils as utils
@@ -143,6 +144,10 @@ def setup(args):
     cfg.merge_from_list(args.opts)
     cfg.freeze()
     default_setup(cfg, args)
+    # setup ssd module logger
+    output_dir = cfg.OUTPUT_DIR
+    rank = comm.get_rank()
+    setup_logger(output_dir, distributed_rank=rank, name="ssd")
     return cfg
 
 

@@ -101,7 +101,7 @@ class ColorAugTransform(Transform):
         return img
 
     def __repr__(self):
-        return "{}()".format(__name__)
+        return "{}()".format(self.__class__.__name__)
 
 
 class RandomSwapChannelsTransform(Transform):
@@ -131,7 +131,7 @@ class RandomSwapChannelsTransform(Transform):
         return segmentation
 
     def __repr__(self):
-        return "{}()".format(__name__)
+        return "{}()".format(self.__class__.__name__)
 
 
 class ExpandTransform(Transform):
@@ -185,6 +185,9 @@ class ExpandTransform(Transform):
         expand_seg[self.top: self.top + h, self.left: self.left + w] = segmentation
         return expand_seg
 
+    def __repr__(self):
+        return "{}()".format(self.__class__.__name__)
+
 
 class CropTransform(_CropTransform):
 
@@ -222,3 +225,6 @@ class CropTransform(_CropTransform):
             box = box[mask]
 
         return super().apply_box(box)
+
+    def __repr__(self):
+        return "{}()".format(self.__class__.__name__)

@@ -30,11 +30,11 @@ DATASETS:
   TRAIN: ("coco_2017_train",)
   TEST: ("coco_2017_val",)
 SOLVER:
-  IMS_PER_BATCH: 16
-  BASE_LR: 0.0005
+  IMS_PER_BATCH: 32
+  BASE_LR: 1e-3
   WEIGHT_DECAY: 0.0005
-  STEPS: (160000, 180000)
-  MAX_ITER: 200000
+  STEPS: (160000, 200000)
+  MAX_ITER: 240000
 INPUT:
   COLOR_AUG: True
   SWAP_CHANNELS: True
@@ -45,8 +45,13 @@ INPUT:
     SIZE: (300, 300)
 TEST:
   EVAL_PERIOD: 10000
+# Need to setting some env variables
+# - "kodo_prefix": default value is "http://det.cjh.zone/detectron2/".
+# - "kodo_access_key": KODO access key.
+# - "kodo_secret_key": KODO secret key.
+# See: https://www.qiniu.com/products/kodo for more details.
 OUTPUT_DUMP:
-  ENABLED: True
+  ENABLED: False
   PLATFORMS: ["KODO"]
   BUCKETS: ["det"]
 VIS_PERIOD: 1000
