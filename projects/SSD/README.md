@@ -59,7 +59,7 @@ learning rate for 160k iterations, and then continue training for 40k iterations
 
 ## Results on MS-COCO in Paper
 
-<img src="http://img.cjh.zone/20201106203001.png" alt="20201106203001" width=70%>
+<img src="http://img.cjh.zone/20201106203001.png" alt="20201106203001" width=60%>
 
 
 ## <a name="CitingSSD"></a>Citing SSD
