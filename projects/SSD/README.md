@@ -45,7 +45,7 @@ python ../../train_net.py --config-file ./config.yaml --eval-only MODEL.WEIGHTS 
 |Model|AP|AP50|AP75|APs|APm|APl|download|
 |-----|--|----|----|---|---|---|--------|
 |[SSD300](labs/ssd_vgg16_size300)|      |      |      |      |      |      | <a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a> |
-|[SSD512](labs/ssd_vgg16_size500)|      |      |      |      |      |      | <a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a> |
+|[SSD512](labs/ssd_vgg16_size512)|      |      |      |      |      |      | <a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a> |
 |[SSD300\*](labs/ssd_vgg16_size300_expand_aug)|      |      |      |      |      |      |<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a>|
 |[SSD512\*](labs/ssd_vgg16_size512_expand_aug)|      |      |      |      |      |      |<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a>|
 
