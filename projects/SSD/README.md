@@ -1,4 +1,13 @@
 # SSD in Detectron2
+**SSD: Single Shot MultiBox Detector**
+
+Wei Liu, Dragomir Anguelov, Dumitru Erhan, Christian Szegedy, Scott Reed, Cheng-Yang Fu, Alexander C. Berg
+
+[[`SSD`](https://github.com/weiliu89/caffe/tree/ssd)][[`arXiv`](https://arxiv.org/abs/1512.02325)][[`BibTeX`](#CitingSSD)]
+
+<img src="http://img.cjh.zone/20201025100036.png" alt="20201025100036" width=70%>
+
+
 
 In this repository, I implement SSD in Detectron2.
 
@@ -7,94 +16,52 @@ Install Detectron2 following [the instructions](https://detectron2.readthedocs.i
 
 ## Training
 
-To train a model with 8 GPUs run:
+To train a model:
 ```bash
-cd /path/to/detectron2/projects/SSD
-python train_net.py --config-file configs/Cityscapes-SemanticSegmentation/deeplab_v3_plus_R_103_os16_mg124_poly_90k_bs16.yaml --num-gpus 8
+cd /path/to/detectron2/projects/SSD/labs/[model_name]
+python ../../train_net.py --config-file ./config.yaml
+```
+
+For example, to train model `ssd_vgg16_size300` on 8 GPUs, one should execute:
+```bash
+cd /path/to/detectron2/projects/SSD/labs/ssd_vgg16_size300
+python ../../train_net.py --config-file ./config.yaml  --num-gpus 8
 ```
 
 ## Evaluation
 
 Model evaluation can be done similarly:
 ```bash
-cd /path/to/detectron2/projects/DeepLab
-python train_net.py --config-file configs/Cityscapes-SemanticSegmentation/deeplab_v3_plus_R_103_os16_mg124_poly_90k_bs16.yaml --eval-only MODEL.WEIGHTS /path/to/model_checkpoint
+cd /path/to/detectron2/projects/SSD/labs/[model_name]
+python ../../train_net.py --config-file ./config.yaml --eval-only MODEL.WEIGHTS /path/to/model_checkpoint
 ```
 
-## Cityscapes Semantic Segmentation
-Cityscapes models are trained with ImageNet pretraining.
+## Results on MS-COCO in Detectron2
 
-<table><tbody>
-<!-- START TABLE -->
-<!-- TABLE HEADER -->
-<th valign="bottom">Method</th>
-<th valign="bottom">Backbone</th>
-<th valign="bottom">Output<br/>resolution</th>
-<th valign="bottom">mIoU</th>
-<th valign="bottom">model id</th>
-<th valign="bottom">download</th>
-<!-- TABLE BODY -->
- <tr><td align="left">DeepLabV3</td>
-<td align="center">R101-DC5</td>
-<td align="center">1024&times;2048</td>
-<td align="center"> 76.7 </td>
-<td align="center"> - </td>
-<td align="center"> - &nbsp;|&nbsp; - </td>
-</tr>
- <tr><td align="left"><a href="configs/Cityscapes-SemanticSegmentation/deeplab_v3_R_103_os16_mg124_poly_90k_bs16.yaml">DeepLabV3</a></td>
-<td align="center">R103-DC5</td>
-<td align="center">1024&times;2048</td>
-<td align="center"> 78.5 </td>
-<td align="center"> 28041665 </td>
-<td align="center"><a href="https://dl.fbaipublicfiles.com/detectron2/DeepLab/Cityscapes-SemanticSegmentation/deeplab_v3_R_103_os16_mg124_poly_90k_bs16/28041665/model_final_0dff1b.pkl
-">model</a>&nbsp;|&nbsp;<a href="https://dl.fbaipublicfiles.com/detectron2/DeepLab/Cityscapes-SemanticSegmentation/deeplab_v3_R_103_os16_mg124_poly_90k_bs16/28041665/metrics.json
-">metrics</a></td>
-</tr>
- <tr><td align="left">DeepLabV3+</td>
-<td align="center">R101-DC5</td>
-<td align="center">1024&times;2048</td>
-<td align="center"> 78.1 </td>
-<td align="center"> - </td>
-<td align="center"> - &nbsp;|&nbsp; - </td>
-</tr>
- <tr><td align="left"><a href="configs/Cityscapes-SemanticSegmentation/deeplab_v3_plus_R_103_os16_mg124_poly_90k_bs16.yaml">DeepLabV3+</a></td>
-<td align="center">R103-DC5</td>
-<td align="center">1024&times;2048</td>
-<td align="center"> 80.0 </td>
-<td align="center">28054032</td>
-<td align="center"><a href="https://dl.fbaipublicfiles.com/detectron2/DeepLab/Cityscapes-SemanticSegmentation/deeplab_v3_plus_R_103_os16_mg124_poly_90k_bs16/28054032/model_final_a8a355.pkl
-">model</a>&nbsp;|&nbsp;<a href="https://dl.fbaipublicfiles.com/detectron2/DeepLab/Cityscapes-SemanticSegmentation/deeplab_v3_plus_R_103_os16_mg124_poly_90k_bs16/28054032/metrics.json
-">metrics</a></td>
-</tr>
-</tbody></table>
+|Model|AP|AP50|AP75|APs|APm|APl|download|
+|-----|--|----|----|---|---|---|--------|
+|[SSD300](labs/ssd_vgg16_size300)|      |      |      |      |      |      | <a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a> |
+|[SSD500](labs/ssd_vgg16_size500)|      |      |      |      |      |      | <a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a> |
+|[SSD300**\***](labs/ssd_vgg16_size300_expand_aug)|      |      |      |      |      |      |<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a>|
+|[SSD500**\***](labs/ssd_vgg16_size512_expand_aug)|      |      |      |      |      |      |<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a>|
 
-Note:
-- [R103](https://dl.fbaipublicfiles.com/detectron2/DeepLab/R-103.pkl): a ResNet-101 with its first 7x7 convolution replaced by 3 3x3 convolutions. 
-This modification has been used in most semantic segmentation papers. We pre-train this backbone on ImageNet using the default recipe of [pytorch examples](https://github.com/pytorch/examples/tree/master/imagenet).
-- DC5 means using dilated convolution in `res5`.
+**Note:**
 
-## <a name="CitingDeepLab"></a>Citing DeepLab
+- I first train the model with $10^{−3}$
+learning rate for $160k$ iterations, and then continue training for $40k$ iterations with $10^{−4}$ and $40k$ iterations with $10^{−5}$.
 
-If you use DeepLab, please use the following BibTeX entry.
+- SSD300* and SSD512* are the models that are trained **with the image expansion data augmentation trick**.
 
-*   DeepLabv3+:
+
+## <a name="CitingSSD"></a>Citing SSD
+
+If you use SSD, please use the following BibTeX entry.
 
 ```
-@inproceedings{deeplabv3plus2018,
-  title={Encoder-Decoder with Atrous Separable Convolution for Semantic Image Segmentation},
-  author={Liang-Chieh Chen and Yukun Zhu and George Papandreou and Florian Schroff and Hartwig Adam},
-  booktitle={ECCV},
-  year={2018}
-}
-```
-
-*   DeepLabv3:
-
-```
-@article{deeplabv32018,
-  title={Rethinking atrous convolution for semantic image segmentation},
-  author={Chen, Liang-Chieh and Papandreou, George and Schroff, Florian and Adam, Hartwig},
-  journal={arXiv:1706.05587},
-  year={2017}
+@inproceedings{liu2016ssd,
+  title = {{SSD}: Single Shot MultiBox Detector},
+  author = {Liu, Wei and Anguelov, Dragomir and Erhan, Dumitru and Szegedy, Christian and Reed, Scott and Fu, Cheng-Yang and Berg, Alexander C.},
+  booktitle = {ECCV},
+  year = {2016}
 }
 ```
