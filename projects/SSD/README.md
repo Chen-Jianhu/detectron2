@@ -11,8 +11,10 @@ Wei Liu, Dragomir Anguelov, Dumitru Erhan, Christian Szegedy, Scott Reed, Cheng-
 
 In this repository, I implement SSD in Detectron2.
 
+
 ## Installation
 Install Detectron2 following [the instructions](https://detectron2.readthedocs.io/tutorials/install.html).
+
 
 ## Training
 
@@ -25,8 +27,9 @@ python ../../train_net.py --config-file ./config.yaml
 For example, to train model `ssd_vgg16_size300` on 8 GPUs, one should execute:
 ```bash
 cd /path/to/detectron2/projects/SSD/labs/ssd_vgg16_size300
-python ../../train_net.py --config-file ./config.yaml  --num-gpus 8
+python ../../train_net.py --config-file ./config.yaml --num-gpus 8
 ```
+
 
 ## Evaluation
 
@@ -36,21 +39,27 @@ cd /path/to/detectron2/projects/SSD/labs/[model_name]
 python ../../train_net.py --config-file ./config.yaml --eval-only MODEL.WEIGHTS /path/to/model_checkpoint
 ```
 
+
 ## Results on MS-COCO in Detectron2
 
 |Model|AP|AP50|AP75|APs|APm|APl|download|
 |-----|--|----|----|---|---|---|--------|
 |[SSD300](labs/ssd_vgg16_size300)|      |      |      |      |      |      | <a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a> |
-|[SSD500](labs/ssd_vgg16_size500)|      |      |      |      |      |      | <a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a> |
-|[SSD300**\***](labs/ssd_vgg16_size300_expand_aug)|      |      |      |      |      |      |<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a>|
-|[SSD500**\***](labs/ssd_vgg16_size512_expand_aug)|      |      |      |      |      |      |<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a>|
+|[SSD512](labs/ssd_vgg16_size500)|      |      |      |      |      |      | <a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a> |
+|[SSD300\*](labs/ssd_vgg16_size300_expand_aug)|      |      |      |      |      |      |<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a>|
+|[SSD512\*](labs/ssd_vgg16_size512_expand_aug)|      |      |      |      |      |      |<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/model_final.pkl">model</a>&nbsp;\|&nbsp;<a href="http://det.cjh.zone/detectron2/projects/SSD/labs/ssd_vgg16_size512/output/metrics.json">metrics</a>|
 
 **Note:**
 
-- I first train the model with $10^{−3}$
-learning rate for $160k$ iterations, and then continue training for $40k$ iterations with $10^{−4}$ and $40k$ iterations with $10^{−5}$.
+- I first train the model with 1e-3
+learning rate for 160k iterations, and then continue training for 40k iterations with 1e-4 and 40k iterations with 1e-5.
 
 - SSD300* and SSD512* are the models that are trained **with the image expansion data augmentation trick**.
+
+
+## Results on MS-COCO in Paper
+
+<img src="http://img.cjh.zone/20201106203001.png" alt="20201106203001" width=50%>
 
 
 ## <a name="CitingSSD"></a>Citing SSD
