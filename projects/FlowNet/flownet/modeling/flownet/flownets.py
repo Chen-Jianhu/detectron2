@@ -20,11 +20,12 @@ from detectron2.layers import Conv2d, get_norm
 from detectron2.structures import ImageList
 from detectron2.utils.events import get_event_storage
 from detectron2.data.detection_utils import convert_image_to_rgb
+from detectron2.utils.flow_visualizer import flow2img
 
 from .build import FLOWNET_REGISTRY
 from ..losses import multiscale_EPE, EPE
 from ..nn_utils import Deconv2d, crop_like
-from flownet.utils.visualizer import flow2img
+
 
 __all__ = ["FlowNetS"]
 
