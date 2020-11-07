@@ -35,19 +35,19 @@ else
     exit
 fi
 
-# # Download datasets
-# echo "Start downloading the dataset ..."
-# # 1. ILSVRC2015 DET
-# echo "Download LSVRC2015 DET datasets (3 subset) ..."
-# BASE_URL="http://image-net.org/image/ILSVRC2015/"
-# for dataset in ILSVRC2015_DET.tar.gz ILSVRC2015_DET_test.tar.gz ILSVRC2015_DET_test_new.tar.gz; do
-#     dest=${ROOT}/${dataset}
-#     echo "Dwonlaod ${dataset} to ${dest} ..."
-#     curl ${BASE_URL}/${dataset} --output ${dest}
-# done
-# # 2. ILSVRC2015 VID
-# echo "Download LSVRC2015 VID datasets ..."
-# curl http://bvisionweb1.cs.unc.edu/ilsvrc2015/ILSVRC2015_VID.tar.gz --output ${ROOT}
+# Download datasets
+echo "Start downloading the dataset ..."
+# 1. ILSVRC2015 DET
+echo "Download LSVRC2015 DET datasets (3 subset) ..."
+BASE_URL="http://image-net.org/image/ILSVRC2015/"
+for dataset in ILSVRC2015_DET.tar.gz ILSVRC2015_DET_test.tar.gz ILSVRC2015_DET_test_new.tar.gz; do
+    dest=${ROOT}/${dataset}
+    echo "Dwonlaod ${dataset} to ${dest} ..."
+    curl ${BASE_URL}/${dataset} --output ${dest}
+done
+# 2. ILSVRC2015 VID
+echo "Download LSVRC2015 VID datasets ..."
+curl http://bvisionweb1.cs.unc.edu/ilsvrc2015/ILSVRC2015_VID.tar.gz --output ${ROOT}
 
 # Unzip datasets
 echo "Start to unzip the dataset ..."
