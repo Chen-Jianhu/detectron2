@@ -22,7 +22,7 @@ def add_dff_config(cfg):
     cfg.MODEL.FLOWNET.WEIGHTS = ""
     cfg.MODEL.FLOWNET.PIXEL_MEAN = [0.45, 0.432, 0.411]
     cfg.MODEL.FLOWNET.PIXEL_STD = [1, 1, 1]
-    cfg.MODEL.FLOWNET.NORM = "BN"
+    cfg.MODEL.FLOWNET.NORM = ""
     cfg.MODEL.FLOWNET.NEGATIVE_SLOPE = 0.1
     # training weight for each scale, from highest resolution (flow2) to lowest (flow6)
     cfg.MODEL.FLOWNET.MULTISCALE_WEIGHTS = [0.005, 0.01, 0.02, 0.08, 0.32]
