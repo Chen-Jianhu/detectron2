@@ -3,7 +3,7 @@
 @File          :   builtin.py
 @Time          :   2020/06/20 7:10:46
 @Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
+@Modified By   :   Chen-Jianhu (jhchen.mail@gmail.com)
 @Last Modified :   2020/07/01 10:25:17
 @License       :   Copyright(C), USTC
 @Desc          :   None

@@ -2,8 +2,7 @@
 """
 @File          :   flying_chairs_evaluation.py
 @Time          :   2020/06/20 7:14:52
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
+@Author        :   Chen-Jianhu (jhchen.mail@gmail.com)
 @Last Modified :   2020/07/01 10:28:05
 @License       :   Copyright(C), USTC
 @Desc          :   None
