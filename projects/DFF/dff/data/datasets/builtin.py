@@ -58,7 +58,5 @@ def register_all_imagenet_vid(root):
         )
 
 
-# Register it under detectron2/project/DeepFeatureFlow/
-_root = os.path.abspath(__file__).split("DeepFeatureFlow")[0]
-_root = os.path.join(_root, "DeepFeatureFlow", "datasets")
+_root = os.getenv("DETECTRON2_DATASETS", "datasets")
 register_all_imagenet_vid(_root)
