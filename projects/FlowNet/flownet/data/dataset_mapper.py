@@ -15,7 +15,7 @@ import numpy as np
 import torch
 
 from detectron2.data import detection_utils as utils
-from .utils import read_flow
+from detectron2.data.flow_utils import read_flow
 
 """
 This file contains the default mapping that's applied to "dataset dicts".
