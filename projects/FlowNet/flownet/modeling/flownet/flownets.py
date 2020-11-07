@@ -3,7 +3,7 @@
 @File          :   flownets.py
 @Time          :   2020/06/20 7:18:07
 @Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
+@Modified By   :   Chen-Jianhu (jhchen.mail@gmail.com)
 @Last Modified :   2020/07/01 10:28:35
 @License       :   Copyright(C), USTC
 @Desc          :   None
@@ -42,9 +42,9 @@ class FlowNetS(nn.Module):
         self.vis_period = cfg.VIS_PERIOD
         self.input_format = cfg.INPUT.FORMAT
 
-        self.register_buffer("flownet_pixel_mean", torch.Tensor(
+        self.register_buffer("flow_pixel_mean", torch.Tensor(
             cfg.MODEL.FLOWNET.PIXEL_MEAN).view(-1, 1, 1))
-        self.register_buffer("flownet_pixel_std", torch.Tensor(
+        self.register_buffer("flow_pixel_std", torch.Tensor(
             cfg.MODEL.FLOWNET.PIXEL_STD).view(-1, 1, 1))
         self.register_buffer("flow_div", torch.Tensor([cfg.MODEL.FLOWNET.FLOW_DIV]))
 
@@ -249,8 +249,8 @@ class FlowNetS(nn.Module):
         images = [torch.cat([img1, img2], dim=0) for img1, img2 in zip(images1, images2)]
         images = [
             (
-                x / 255. - self.flownet_pixel_mean.repeat([2, 1, 1])
-            ) / self.flownet_pixel_std.repeat([2, 1, 1])
+                x / 255. - self.flow_pixel_mean.repeat([2, 1, 1])
+            ) / self.flow_pixel_std.repeat([2, 1, 1])
             for x in images
         ]
         images = ImageList.from_tensors(images)
@@ -266,4 +266,4 @@ class FlowNetS(nn.Module):
 
     @property
     def device(self):
-        return self.flownet_pixel_mean.device
+        return self.flow_pixel_mean.device

@@ -10,8 +10,6 @@
 """
 
 from .dataset_mapper import FlyingChairsMapper
-# ensure the builtin datasets are registered
-from . import datasets
 
 __all__ = [
     "FlyingChairsMapper",

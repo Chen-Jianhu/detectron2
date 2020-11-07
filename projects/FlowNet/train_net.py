@@ -19,14 +19,13 @@ from detectron2.data import (
     build_detection_test_loader
 )
 from detectron2.engine import DefaultTrainer, default_argument_parser, default_setup, launch
-from detectron2.evaluation import DatasetEvaluators, verify_results
+from detectron2.evaluation import FlyingChairsEvaluator, DatasetEvaluators, verify_results
 from detectron2.utils import comm
 from detectron2.utils.logger import setup_logger
 
 from flownet.config import add_flownet_config
 from flownet.modeling.flownet import build_flownet
 from flownet.data import FlyingChairsMapper
-from flownet.evaluation import FlyingChairsEvaluator
 
 
 class Trainer(DefaultTrainer):
