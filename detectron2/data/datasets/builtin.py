@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""
+@File          :   builtin.py
+@Time          :   2020/06/20 7:10:46
+@Author        :   Facebook, Inc. and its affiliates.
+@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
+@Last Modified :   2020/07/01 10:25:17
+@License       :   Copyright(C), USTC
+@Desc          :   None
+"""
 
 
 """
@@ -26,6 +34,7 @@ from .cityscapes import load_cityscapes_instances, load_cityscapes_semantic
 from .lvis import get_lvis_instances_meta, register_lvis_instances
 from .pascal_voc import register_pascal_voc
 from .register_coco import register_coco_instances, register_coco_panoptic_separated
+from .flying_chairs import get_flying_chairs_meta, register_flying_chairs
 
 # ==== Predefined datasets and splits for COCO ==========
 
@@ -212,9 +221,29 @@ def register_all_pascal_voc(root):
         MetadataCatalog.get(name).evaluator_type = "pascal_voc"
 
 
+# ==== Predefined datasets and splits for FlyingChairs ==========
+
+
+_PREDEFINED_SPLITS_FLYING_CHAIRS = {
+    "flying_chairs_train": "FlyingChairs_release/flying_chairs_train.json",
+    "flying_chairs_test": "FlyingChairs_release/flying_chairs_test.json",
+}
+
+
+def register_all_flying_chairs(root):
+    meta = get_flying_chairs_meta()
+    for (name, json_file) in _PREDEFINED_SPLITS_FLYING_CHAIRS.items():
+        register_flying_chairs(
+            name,
+            meta,
+            os.path.join(root, json_file)
+        )
+
+
 # Register them all under "./datasets"
 _root = os.getenv("DETECTRON2_DATASETS", "datasets")
 register_all_coco(_root)
 register_all_lvis(_root)
 register_all_cityscapes(_root)
 register_all_pascal_voc(_root)
+register_all_flying_chairs(_root)
