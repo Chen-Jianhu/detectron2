@@ -3,7 +3,7 @@
 @File          :   train_net.py
 @Time          :   2020/06/20 7:21:07
 @Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
+@Modified By   :   Chen-Jianhu (jhchen.mail@gmail.com)
 @Last Modified :   2020/07/01 10:34:37
 @License       :   Copyright(C), USTC
 @Desc          :   None
@@ -22,9 +22,9 @@ from detectron2.engine import DefaultTrainer, default_argument_parser, default_s
 from detectron2.evaluation import FlyingChairsEvaluator, DatasetEvaluators, verify_results
 from detectron2.utils import comm
 from detectron2.utils.logger import setup_logger
+from detectron2.modeling import build_flow_net
 
 from flownet.config import add_flownet_config
-from flownet.modeling.flownet import build_flownet
 from flownet.data import FlyingChairsMapper
 
 
@@ -45,7 +45,7 @@ class Trainer(DefaultTrainer):
         It now calls :func:`detectron2.modeling.build_model`.
         Overwrite it if you'd like a different model.
         """
-        model = build_flownet(cfg)
+        model = build_flow_net(cfg)
         logger = logging.getLogger("flownet.train_net")
         logger.info("Model:\n{}".format(model))
         return model

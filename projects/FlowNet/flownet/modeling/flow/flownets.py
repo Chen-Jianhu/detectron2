@@ -14,6 +14,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+from typing import List, Tuple
+
 from torch.nn.init import kaiming_normal_, constant_
 from functools import partial
 from detectron2.layers import Conv2d, get_norm
@@ -21,33 +23,81 @@ from detectron2.structures import ImageList
 from detectron2.utils.events import get_event_storage
 from detectron2.data.detection_utils import convert_image_to_rgb
 from detectron2.utils.flow_visualizer import flow2img
-
-from .build import FLOWNET_REGISTRY
-from ..losses import multiscale_EPE, EPE
-from ..nn_utils import Deconv2d, crop_like
+from detectron2.layers import ConvTranspose2d
+from detectron2.losses import endpoint_error
+from detectron2.modeling import FLOW_NET_REGISTRY
 
 
 __all__ = ["FlowNetS"]
 
 
-@FLOWNET_REGISTRY.register()
+class Deconv2d(ConvTranspose2d):
+
+    def __init__(self, *args, **kwargs):
+        activation = kwargs.pop("activation", None)
+        super().__init__(*args, **kwargs)
+
+        self.activation = activation
+
+    def forward(self, x):
+        x = super().forward(x)
+        if self.activation is not None:
+            x = self.activation(x)
+        return x
+
+
+def crop_like(input, target):
+    if input.size()[2:] == target.size()[2:]:
+        return input
+    else:
+        return input[:, :, :target.size(2), :target.size(3)]
+
+
+def multiscale_EPE(pred_flows, target_flow, weights=None):
+    """
+
+    Args:
+        pred_flows (list[Tensor]): predicted multiscale flows.
+        target_flow (Tensor): target flow.
+        weights (list[float]): weight of EEP per scale.
+    """
+    def single_scale(pred_flow, target):
+        """
+        """
+        h, w = pred_flow.shape[-2:]
+        target_scaled = F.interpolate(target, (h, w), mode='area')
+        return endpoint_error(pred_flow, target_scaled, reduction="mean")
+
+    if not isinstance(pred_flows, (Tuple, List)):
+        pred_flows = [pred_flows]
+
+    assert(len(weights) == len(pred_flows))
+
+    losses = []
+    for pred_flow, weight in zip(pred_flows, weights):
+        loss = weight * single_scale(pred_flow, target_flow).sum() / pred_flow.size(0)
+        losses.append(loss)
+    return sum(losses)
+
+
+@FLOW_NET_REGISTRY.register()
 class FlowNetS(nn.Module):
 
     def __init__(self, cfg):
         super().__init__()
 
-        norm = cfg.MODEL.FLOWNET.NORM
-        negative_slope = cfg.MODEL.FLOWNET.NEGATIVE_SLOPE
-        self.multiscale_weights = cfg.MODEL.FLOWNET.MULTISCALE_WEIGHTS
+        norm = cfg.MODEL.FLOW_NET.NORM
+        negative_slope = cfg.MODEL.FLOW_NET.NEGATIVE_SLOPE
+        self.multiscale_weights = cfg.MODEL.FLOW_NET.MULTISCALE_WEIGHTS
         # Vis parameters
         self.vis_period = cfg.VIS_PERIOD
         self.input_format = cfg.INPUT.FORMAT
 
         self.register_buffer("flow_pixel_mean", torch.Tensor(
-            cfg.MODEL.FLOWNET.PIXEL_MEAN).view(-1, 1, 1))
+            cfg.MODEL.FLOW_NET.PIXEL_MEAN).view(-1, 1, 1))
         self.register_buffer("flow_pixel_std", torch.Tensor(
-            cfg.MODEL.FLOWNET.PIXEL_STD).view(-1, 1, 1))
-        self.register_buffer("flow_div", torch.Tensor([cfg.MODEL.FLOWNET.FLOW_DIV]))
+            cfg.MODEL.FLOW_NET.PIXEL_STD).view(-1, 1, 1))
+        self.register_buffer("flow_div", torch.Tensor([cfg.MODEL.FLOW_NET.FLOW_DIV]))
 
         self._init_layers(norm, negative_slope)
         self._init_weights()
@@ -223,7 +273,7 @@ class FlowNetS(nn.Module):
     def losses(self, pred_flows, target):
         h, w = target.shape[-2:]
         flow2 = F.interpolate(pred_flows[0], (h, w), mode='bilinear', align_corners=False)
-        flow2_EPE = self.flow_div * EPE(flow2, target)
+        flow2_EPE = self.flow_div * endpoint_error(flow2, target, reduction="mean")
         get_event_storage().put_scalar("EPE", flow2_EPE)
         loss = multiscale_EPE(pred_flows, target, weights=self.multiscale_weights)
         return {"loss": loss}
