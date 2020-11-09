@@ -2,8 +2,7 @@
 """
 @File          :   flownets.py
 @Time          :   2020/06/20 7:18:07
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Chen-Jianhu (jhchen.mail@gmail.com)
+@Author        :   Chen-Jianhu (jhchen.mail@gmail.com)
 @Last Modified :   2020/07/01 10:28:35
 @License       :   Copyright(C), USTC
 @Desc          :   None
@@ -14,16 +13,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from typing import List, Tuple
-
-from torch.nn.init import kaiming_normal_, constant_
-from functools import partial
-from detectron2.layers import Conv2d, get_norm
+from typing import List, Tuple, OrderedDict
+from fvcore.nn.weight_init import c2_msra_fill
+from detectron2.layers import ConvTranspose2d, cat
 from detectron2.structures import ImageList
 from detectron2.utils.events import get_event_storage
 from detectron2.data.detection_utils import convert_image_to_rgb
 from detectron2.utils.flow_visualizer import flow2img
-from detectron2.layers import ConvTranspose2d
 from detectron2.losses import endpoint_error
 from detectron2.modeling import FLOW_NET_REGISTRY
 
@@ -31,35 +27,12 @@ from detectron2.modeling import FLOW_NET_REGISTRY
 __all__ = ["FlowNetS"]
 
 
-class Deconv2d(ConvTranspose2d):
-
-    def __init__(self, *args, **kwargs):
-        activation = kwargs.pop("activation", None)
-        super().__init__(*args, **kwargs)
-
-        self.activation = activation
-
-    def forward(self, x):
-        x = super().forward(x)
-        if self.activation is not None:
-            x = self.activation(x)
-        return x
-
-
-def crop_like(input, target):
-    if input.size()[2:] == target.size()[2:]:
-        return input
-    else:
-        return input[:, :, :target.size(2), :target.size(3)]
-
-
-def multiscale_EPE(pred_flows, target_flow, weights=None):
+def multiscale_endpoint_error(pred_flows, target_flow, weights=None):
     """
-
     Args:
         pred_flows (list[Tensor]): predicted multiscale flows.
         target_flow (Tensor): target flow.
-        weights (list[float]): weight of EEP per scale.
+        weights (list[float]): weight of endpoint error per scale.
     """
     def single_scale(pred_flow, target):
         """
@@ -73,11 +46,10 @@ def multiscale_EPE(pred_flows, target_flow, weights=None):
 
     assert(len(weights) == len(pred_flows))
 
-    losses = []
+    losses = 0.
     for pred_flow, weight in zip(pred_flows, weights):
-        loss = weight * single_scale(pred_flow, target_flow).sum() / pred_flow.size(0)
-        losses.append(loss)
-    return sum(losses)
+        losses += weight * single_scale(pred_flow, target_flow)
+    return losses
 
 
 @FLOW_NET_REGISTRY.register()
@@ -86,7 +58,6 @@ class FlowNetS(nn.Module):
     def __init__(self, cfg):
         super().__init__()
 
-        norm = cfg.MODEL.FLOW_NET.NORM
         negative_slope = cfg.MODEL.FLOW_NET.NEGATIVE_SLOPE
         self.multiscale_weights = cfg.MODEL.FLOW_NET.MULTISCALE_WEIGHTS
         # Vis parameters
@@ -99,65 +70,85 @@ class FlowNetS(nn.Module):
             cfg.MODEL.FLOW_NET.PIXEL_STD).view(-1, 1, 1))
         self.register_buffer("flow_div", torch.Tensor([cfg.MODEL.FLOW_NET.FLOW_DIV]))
 
-        self._init_layers(norm, negative_slope)
+        net_args = [
+            # name | type | in_chs | out_chs| kernel_size | strid | pad
+            ["conv1", "conv", 6, 64, 7, 2, 3],
+            ["conv2", "conv", 64, 128, 5, 2, 2],
+            ["conv3", "conv", 128, 256, 5, 2, 2],
+            ["conv3_1", "conv", 256, 256, 3, 1, 1],
+            ["conv4", "conv", 256, 512, 3, 2, 1],
+            ["conv4_1", "conv", 512, 512, 3, 1, 1],
+            ["conv5", "conv", 512, 512, 3, 2, 1],
+            ["conv5_1", "conv", 512, 512, 3, 1, 1],
+            ["conv6", "conv", 512, 1024, 3, 2, 1],
+            ["conv6_1", "conv", 1024, 1024, 3, 1, 1],
+
+            ["deconv5", "deconv", 1024, 512, 4, 2, 1],
+            ["deconv4", "deconv", 1026, 256, 4, 2, 1],
+            ["deconv3", "deconv", 770, 128, 4, 2, 1],
+            ["deconv2", "deconv", 386, 64, 4, 2, 1],
+
+            ["upsample_flow6to5", "deconv", 2, 2, 4, 2, 1],
+            ["upsample_flow5to4", "deconv", 2, 2, 4, 2, 1],
+            ["upsample_flow4to3", "deconv", 2, 2, 4, 2, 1],
+            ["upsample_flow3to2", "deconv", 2, 2, 4, 2, 1],
+
+            ["pred6", "conv", 1024, 2, 3, 1, 1],
+            ["pred5", "conv", 1026, 2, 3, 1, 1],
+            ["pred4", "conv", 770, 2, 3, 1, 1],
+            ["pred3", "conv", 386, 2, 3, 1, 1],
+            ["pred2", "conv", 194, 2, 3, 1, 1],
+        ]
+        self._build_layers(net_args, negative_slope)
         self._init_weights()
 
-    def _init_layers(self, norm, negative_slope):
-        bias = (True if norm == "" else False)
-        self.conv1 = Conv2d(6, 64, 7, 2, 3, bias=bias, norm=get_norm(norm, 64),
-                            activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.conv2 = Conv2d(64, 128, 5, 2, 2, bias=bias, norm=get_norm(norm, 128),
-                            activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.conv3 = Conv2d(128, 256, 5, 2, 2, bias=bias, norm=get_norm(norm, 256),
-                            activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.conv3_1 = Conv2d(256, 256, 3, 1, 1, bias=bias, norm=get_norm(norm, 256),
-                              activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.conv4 = Conv2d(256, 512, 3, 2, 1, bias=bias, norm=get_norm(norm, 512),
-                            activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.conv4_1 = Conv2d(512, 512, 3, 1, 1, bias=bias, norm=get_norm(norm, 512),
-                              activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.conv5 = Conv2d(512, 512, 3, 2, 1, bias=bias, norm=get_norm(norm, 512),
-                            activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.conv5_1 = Conv2d(512, 512, 3, 1, 1, bias=bias, norm=get_norm(norm, 512),
-                              activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.conv6 = Conv2d(512, 1024, 3, 2, 1, bias=bias, norm=get_norm(norm, 1024),
-                            activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.conv6_1 = Conv2d(1024, 1024, 3, 1, 1, bias=bias, norm=get_norm(norm, 1024),
-                              activation=nn.LeakyReLU(negative_slope, inplace=True))
+    def _build_layers(self, net_args, negative_slope):
+        """
+        Build layers for FlowNet.
 
-        deconv2d = partial(Deconv2d, kernel_size=4, stride=2, padding=1, bias=False,
-                           activation=nn.LeakyReLU(negative_slope, inplace=True))
-        self.deconv5 = deconv2d(1024, 512)
-        self.deconv4 = deconv2d(1026, 256)
-        self.deconv3 = deconv2d(770, 128)
-        self.deconv2 = deconv2d(386, 64)
+        Args:
+            net_args (list[list[str or int]]): contains some list,
+                which every one specify one convolution layer parameters,
+                the order as follows:
+                [name | type | in_chs | out_chs| kernel_size | strid | pad].
+                Note that the layer type must be `conv` or `deconv`.
 
-        predict_flow = partial(Conv2d, out_channels=2, kernel_size=3, stride=1,
-                               padding=1, bias=False)
-        self.predict_flow6 = predict_flow(1024)
-        self.predict_flow5 = predict_flow(1026)
-        self.predict_flow4 = predict_flow(770)
-        self.predict_flow3 = predict_flow(386)
-        self.predict_flow2 = predict_flow(194)
+            negative_slope (float): for LeakyRelu.
+        """
+        mapper = {
+            "conv": nn.Conv2d,
+            "deconv": ConvTranspose2d,
+        }
 
-        self.upsampled_flow6_to_5 = deconv2d(2, 2)
-        self.upsampled_flow5_to_4 = deconv2d(2, 2)
-        self.upsampled_flow4_to_3 = deconv2d(2, 2)
-        self.upsampled_flow3_to_2 = deconv2d(2, 2)
+        for layer_arg in net_args:
+            name, conv_type = layer_arg[:2]
+            assert conv_type in mapper, conv_type
+
+            conv_args = layer_arg[2:]
+            layer = OrderedDict(
+                {"conv": mapper.get(conv_type)(*conv_args)}
+            )
+
+            if "pred" not in name and "upsample" not in name:
+                layer["act"] = nn.LeakyReLU(negative_slope=negative_slope, inplace=True)
+
+            self.add_module(name, nn.Sequential(layer))
 
     def _init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
-                kaiming_normal_(m.weight, 0.1)
-                if m.bias is not None:
-                    constant_(m.bias, 0)
-            elif isinstance(m, nn.BatchNorm2d):
-                constant_(m.weight, 1)
-                constant_(m.bias, 0)
+                c2_msra_fill(m)
+        # For BN layer, by default, the elements of :math:`\gamma` are set to 1
+        # and the elements of :math:`\beta` are set to 0.
 
     def forward_layers(self, images):
         """
-        images (Tensor): shape is [N, 6, H, W]
+        Args：
+            images (Tensor): shape is [N, 6, H, W].
+
+        Returns:
+            (tuple): a tuple which contains flow predictions, the order is
+            flow2, flow3, flow4, flow5, flow6, they resolution decline by order.
         """
         out_conv2 = self.conv2(self.conv1(images))
         out_conv3 = self.conv3_1(self.conv3(out_conv2))
@@ -165,27 +156,27 @@ class FlowNetS(nn.Module):
         out_conv5 = self.conv5_1(self.conv5(out_conv4))
         out_conv6 = self.conv6_1(self.conv6(out_conv5))
 
-        flow6 = self.predict_flow6(out_conv6)
-        flow6_up = crop_like(self.upsampled_flow6_to_5(flow6), out_conv5)
-        out_deconv5 = crop_like(self.deconv5(out_conv6), out_conv5)
+        flow6 = self.pred6(out_conv6)
 
-        concat5 = torch.cat((out_conv5, out_deconv5, flow6_up), 1)
-        flow5 = self.predict_flow5(concat5)
-        flow5_up = crop_like(self.upsampled_flow5_to_4(flow5), out_conv4)
-        out_deconv4 = crop_like(self.deconv4(concat5), out_conv4)
+        flow6_up = self.upsample_flow6to5(flow6)
+        out_deconv5 = self.deconv5(out_conv6)
+        concat5 = cat((out_conv5, out_deconv5, flow6_up), 1)
+        flow5 = self.pred5(concat5)
 
-        concat4 = torch.cat((out_conv4, out_deconv4, flow5_up), 1)
-        flow4 = self.predict_flow4(concat4)
-        flow4_up = crop_like(self.upsampled_flow4_to_3(flow4), out_conv3)
-        out_deconv3 = crop_like(self.deconv3(concat4), out_conv3)
+        flow5_up = self.upsample_flow5to4(flow5)
+        out_deconv4 = self.deconv4(concat5)
+        concat4 = cat((out_conv4, out_deconv4, flow5_up), 1)
+        flow4 = self.pred4(concat4)
 
-        concat3 = torch.cat((out_conv3, out_deconv3, flow4_up), 1)
-        flow3 = self.predict_flow3(concat3)
-        flow3_up = crop_like(self.upsampled_flow3_to_2(flow3), out_conv2)
-        out_deconv2 = crop_like(self.deconv2(concat3), out_conv2)
+        flow4_up = self.upsample_flow4to3(flow4)
+        out_deconv3 = self.deconv3(concat4)
+        concat3 = cat((out_conv3, out_deconv3, flow4_up), 1)
+        flow3 = self.pred3(concat3)
 
-        concat2 = torch.cat((out_conv2, out_deconv2, flow3_up), 1)
-        flow2 = self.predict_flow2(concat2)
+        flow3_up = self.upsample_flow3to2(flow3)
+        out_deconv2 = self.deconv2(concat3)
+        concat2 = cat((out_conv2, out_deconv2, flow3_up), 1)
+        flow2 = self.pred2(concat2)
 
         return flow2, flow3, flow4, flow5, flow6
 
@@ -193,11 +184,11 @@ class FlowNetS(nn.Module):
         """
         Args:
             batched_inputs: a list, batched outputs of :class:`DatasetMapper` .
-                Each item in the list contains the inputs for one image.
+                Each item in the list contains the inputs for two images.
                 For now, each item in the list is a dict that contains:
 
-                * image: Tensor, image in (C, H, W) format.
-                * instances: Instances
+                * image1, image2: Tensor, in (C, H, W) format.
+                * flow_map: Tensor, in (C, H, W) format.
 
                 Other information that's included in the original dicts, such as:
 
@@ -258,6 +249,7 @@ class FlowNetS(nn.Module):
             storage.put_image(vis_name, vis_img)
             break  # only visualize one image in a batch
 
+    @torch.no_grad()
     def inference(self, multiscale_flows, batched_inputs):
         processed_results = []
         # flow2
@@ -273,10 +265,10 @@ class FlowNetS(nn.Module):
     def losses(self, pred_flows, target):
         h, w = target.shape[-2:]
         flow2 = F.interpolate(pred_flows[0], (h, w), mode='bilinear', align_corners=False)
-        flow2_EPE = self.flow_div * endpoint_error(flow2, target, reduction="mean")
-        get_event_storage().put_scalar("EPE", flow2_EPE)
-        loss = multiscale_EPE(pred_flows, target, weights=self.multiscale_weights)
-        return {"loss": loss}
+        flow2_epe = self.flow_div * endpoint_error(flow2, target, reduction="mean")
+        get_event_storage().put_scalar("EPE", flow2_epe)
+        losses = multiscale_endpoint_error(pred_flows, target, weights=self.multiscale_weights)
+        return {"loss": losses}
 
     @torch.no_grad()
     def get_ground_truth(self, batched_inputs):
@@ -297,7 +289,7 @@ class FlowNetS(nn.Module):
         """
         images1 = [x["image1"].to(self.device) for x in batched_inputs]
         images2 = [x["image2"].to(self.device) for x in batched_inputs]
-        images = [torch.cat([img1, img2], dim=0) for img1, img2 in zip(images1, images2)]
+        images = [cat([img1, img2], dim=0) for img1, img2 in zip(images1, images2)]
         images = [
             (
                 x / 255. - self.flow_pixel_mean.repeat([2, 1, 1])

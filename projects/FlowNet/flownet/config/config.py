@@ -19,7 +19,6 @@ def add_flownet_config(cfg):
     cfg.MODEL.FLOW_NET.NAME = "FlowNetS"
     cfg.MODEL.FLOW_NET.PIXEL_MEAN = [0.45, 0.432, 0.411]
     cfg.MODEL.FLOW_NET.PIXEL_STD = [1, 1, 1]
-    cfg.MODEL.FLOW_NET.NORM = ""
     cfg.MODEL.FLOW_NET.NEGATIVE_SLOPE = 0.1
     # training weight for each scale, from highest resolution (flow2) to lowest (flow6)
     cfg.MODEL.FLOW_NET.MULTISCALE_WEIGHTS = [0.005, 0.01, 0.02, 0.08, 0.32]
