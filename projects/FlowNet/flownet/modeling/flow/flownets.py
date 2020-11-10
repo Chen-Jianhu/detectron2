@@ -13,7 +13,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from typing import List, Tuple, OrderedDict
+from typing import List, Tuple
+from collections import OrderedDict
 from fvcore.nn.weight_init import c2_msra_fill
 from detectron2.layers import ConvTranspose2d, cat
 from detectron2.structures import ImageList
