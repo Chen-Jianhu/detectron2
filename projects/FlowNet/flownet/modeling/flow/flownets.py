@@ -35,21 +35,22 @@ def multiscale_endpoint_error(pred_flows, target_flow, weights=None):
         target_flow (Tensor): target flow.
         weights (list[float]): weight of endpoint error per scale.
     """
-    def single_scale(pred_flow, target):
+    def single_scale(pred_flow, target_flow):
         """
         """
         h, w = pred_flow.shape[-2:]
-        target_scaled = F.interpolate(target, (h, w), mode='area')
-        return endpoint_error(pred_flow, target_scaled, reduction="mean")
+        target_scaled = F.interpolate(target_flow, (h, w), mode='area')
+        return endpoint_error(pred_flow, target_scaled, reduction="sum")
 
     if not isinstance(pred_flows, (Tuple, List)):
         pred_flows = [pred_flows]
 
     assert(len(weights) == len(pred_flows))
 
+    batch_size = target_flow.size(0)
     losses = 0.
     for pred_flow, weight in zip(pred_flows, weights):
-        losses += weight * single_scale(pred_flow, target_flow)
+        losses += weight * single_scale(pred_flow, target_flow) / batch_size
     return losses
 
 
@@ -72,33 +73,33 @@ class FlowNetS(nn.Module):
         self.register_buffer("flow_div", torch.Tensor([cfg.MODEL.FLOW_NET.FLOW_DIV]))
 
         net_args = [
-            # name | type | in_chs | out_chs| kernel_size | strid | pad
-            ["conv1", "conv", 6, 64, 7, 2, 3],
-            ["conv2", "conv", 64, 128, 5, 2, 2],
-            ["conv3", "conv", 128, 256, 5, 2, 2],
-            ["conv3_1", "conv", 256, 256, 3, 1, 1],
-            ["conv4", "conv", 256, 512, 3, 2, 1],
-            ["conv4_1", "conv", 512, 512, 3, 1, 1],
-            ["conv5", "conv", 512, 512, 3, 2, 1],
-            ["conv5_1", "conv", 512, 512, 3, 1, 1],
-            ["conv6", "conv", 512, 1024, 3, 2, 1],
-            ["conv6_1", "conv", 1024, 1024, 3, 1, 1],
+            # name | type | in_chs | out_chs| kernel_size | strid | pad | act
+            ["conv1", "conv", 6, 64, 7, 2, 3, True],
+            ["conv2", "conv", 64, 128, 5, 2, 2, True],
+            ["conv3", "conv", 128, 256, 5, 2, 2, True],
+            ["conv3_1", "conv", 256, 256, 3, 1, 1, True],
+            ["conv4", "conv", 256, 512, 3, 2, 1, True],
+            ["conv4_1", "conv", 512, 512, 3, 1, 1, True],
+            ["conv5", "conv", 512, 512, 3, 2, 1, True],
+            ["conv5_1", "conv", 512, 512, 3, 1, 1, True],
+            ["conv6", "conv", 512, 1024, 3, 2, 1, True],
+            ["conv6_1", "conv", 1024, 1024, 3, 1, 1, True],
 
-            ["deconv5", "deconv", 1024, 512, 4, 2, 1],
-            ["deconv4", "deconv", 1026, 256, 4, 2, 1],
-            ["deconv3", "deconv", 770, 128, 4, 2, 1],
-            ["deconv2", "deconv", 386, 64, 4, 2, 1],
+            ["deconv5", "deconv", 1024, 512, 4, 2, 1, True],
+            ["deconv4", "deconv", 1026, 256, 4, 2, 1, True],
+            ["deconv3", "deconv", 770, 128, 4, 2, 1, True],
+            ["deconv2", "deconv", 386, 64, 4, 2, 1, True],
 
-            ["upsample_flow6to5", "deconv", 2, 2, 4, 2, 1],
-            ["upsample_flow5to4", "deconv", 2, 2, 4, 2, 1],
-            ["upsample_flow4to3", "deconv", 2, 2, 4, 2, 1],
-            ["upsample_flow3to2", "deconv", 2, 2, 4, 2, 1],
+            ["upsample_flow6to5", "deconv", 2, 2, 4, 2, 1, False],
+            ["upsample_flow5to4", "deconv", 2, 2, 4, 2, 1, False],
+            ["upsample_flow4to3", "deconv", 2, 2, 4, 2, 1, False],
+            ["upsample_flow3to2", "deconv", 2, 2, 4, 2, 1, False],
 
-            ["pred6", "conv", 1024, 2, 3, 1, 1],
-            ["pred5", "conv", 1026, 2, 3, 1, 1],
-            ["pred4", "conv", 770, 2, 3, 1, 1],
-            ["pred3", "conv", 386, 2, 3, 1, 1],
-            ["pred2", "conv", 194, 2, 3, 1, 1],
+            ["pred6", "conv", 1024, 2, 3, 1, 1, False],
+            ["pred5", "conv", 1026, 2, 3, 1, 1, False],
+            ["pred4", "conv", 770, 2, 3, 1, 1, False],
+            ["pred3", "conv", 386, 2, 3, 1, 1, False],
+            ["pred2", "conv", 194, 2, 3, 1, 1, False],
         ]
         self._build_layers(net_args, negative_slope)
         self._init_weights()
@@ -111,7 +112,7 @@ class FlowNetS(nn.Module):
             net_args (list[list[str or int]]): contains some list,
                 which every one specify one convolution layer parameters,
                 the order as follows:
-                [name | type | in_chs | out_chs| kernel_size | strid | pad].
+                [name | type | in_chs | out_chs| kernel_size | strid | pad | act].
                 Note that the layer type must be `conv` or `deconv`.
 
             negative_slope (float): for LeakyRelu.
@@ -125,12 +126,13 @@ class FlowNetS(nn.Module):
             name, conv_type = layer_arg[:2]
             assert conv_type in mapper, conv_type
 
-            conv_args = layer_arg[2:]
+            conv_args = layer_arg[2:-1]
             layer = OrderedDict(
                 {"conv": mapper.get(conv_type)(*conv_args)}
             )
 
-            if "pred" not in name and "upsample" not in name:
+            has_act = layer_arg[-1]
+            if has_act:
                 layer["act"] = nn.LeakyReLU(negative_slope=negative_slope, inplace=True)
 
             self.add_module(name, nn.Sequential(layer))
@@ -139,8 +141,6 @@ class FlowNetS(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d) or isinstance(m, nn.ConvTranspose2d):
                 c2_msra_fill(m)
-        # For BN layer, by default, the elements of :math:`\gamma` are set to 1
-        # and the elements of :math:`\beta` are set to 0.
 
     def forward_layers(self, images):
         """
