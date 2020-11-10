@@ -627,8 +627,8 @@ _C.OUTPUT_DUMP = CN({"ENABLED": False})
 # Options are:
 # - "KODO": https://www.qiniu.com/products/kodo
 # - (will support more)
-_C.OUTPUT_DUMP.PLATFORMS = []
-_C.OUTPUT_DUMP.BUCKETS = []
+_C.OUTPUT_DUMP.PLATFORMS = ["KODO"]
+_C.OUTPUT_DUMP.BUCKETS = ["det"]
 _C.OUTPUT_DUMP.PERIOD = _C.SOLVER.CHECKPOINT_PERIOD
 
 # Set seed to negative to fully randomize everything.
