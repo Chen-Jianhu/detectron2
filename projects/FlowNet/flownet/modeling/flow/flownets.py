@@ -236,7 +236,9 @@ class FlowNetS(nn.Module):
             gt_flow_img = flow2img(input_i["flow_map"].permute(1, 2, 0).cpu().numpy())
             pred_flow_img = flow2img(pred_flow_i["flow"].permute(1, 2, 0).detach().cpu().numpy())
 
-            assert(image1.shape == gt_flow_img.shape) and (gt_flow_img.shape == pred_flow_img.shape)
+            assert image1.shape == gt_flow_img.shape == pred_flow_img.shape, (
+                image1.shape, gt_flow_img.shape, pred_flow_img.shape
+            )
 
             h, w, c = image1.shape
             vis_img = np.zeros([2 * h, 2 * w, c], dtype=np.uint8)
@@ -255,7 +257,7 @@ class FlowNetS(nn.Module):
         processed_results = []
         # flow2
         for flow_i, batched_input_i in zip(multiscale_flows[0], batched_inputs):
-            h, w = batched_input_i["height"], batched_input_i["width"]
+            h, w = batched_input_i["image1"].shape[-2:]
             flow_i = flow_i.unsqueeze(dim=0)
             flow_i = F.interpolate(flow_i, (h, w), mode='bilinear', align_corners=False)
             flow_i = flow_i.squeeze(dim=0)
@@ -282,7 +284,7 @@ class FlowNetS(nn.Module):
 
         """
         tragets = self.preprocess_flow(batched_inputs)
-        return torch.stack(tragets)
+        return tragets
 
     def preprocess_image(self, batched_inputs):
         """
@@ -302,10 +304,11 @@ class FlowNetS(nn.Module):
 
     def preprocess_flow(self, batched_inputs):
         """
-        Normalize the target flow.
+        Normalize and pad and batch the target flow.
         """
         flows = [x["flow_map"].to(self.device) for x in batched_inputs]
         flows = [x / self.flow_div for x in flows]
+        flows = ImageList.from_tensors(flows).tensor
         return flows
 
     @property

@@ -26,4 +26,15 @@ def add_flownet_config(cfg):
     # Original value is 20 but 1 with batchNorm gives good results
     cfg.MODEL.FLOW_NET.FLOW_DIV = 20.
 
-    cfg.INPUT.TRANSFORMS = ()
+    # Data Augmentations
+    cfg.INPUT.TRANSLATION = CN({"ENABLED": False})
+    cfg.INPUT.TRANSLATION.RANGE = 0.2
+
+    cfg.INPUT.ROTATION = CN({"ENABLED": False})
+    cfg.INPUT.ROTATION.ANGLE = [-17, 17]
+
+    cfg.INPUT.CROP = CN({"ENABLED": False})
+    cfg.INPUT.CROP.TYPE = "absolute"
+    cfg.INPUT.CROP.SIZE = [320, 448]
+
+    cfg.INPUT.FLIP = ""

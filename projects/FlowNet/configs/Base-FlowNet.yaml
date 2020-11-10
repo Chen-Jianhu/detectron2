@@ -22,7 +22,18 @@ SOLVER:
     BETAS: (0.9, 0.999)
     AMSGRAD: False
 INPUT:
-  TRANSFORMS: ()
+  TRANSLATION:
+    ENABLED: False
+    RANGE: 0.2
+  ROTATION:
+    ENABLED: False
+    ANGLE: [-17, 17]
+  CROP:
+    ENABLED: False
+    TYPE: "absolute"
+    SIZE: [320, 448]
+  FLIP: "" # optional: ["" | "horizontal" | "vertical" | "both"]
+
 TEST:
   EVAL_PERIOD: 10000
 VIS_PERIOD: 5000

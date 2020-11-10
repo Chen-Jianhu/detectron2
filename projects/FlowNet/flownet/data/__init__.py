@@ -8,8 +8,8 @@
 @Desc          :   None
 """
 
-from .dataset_mapper import FlyingChairsMapper
+from .dataset_mapper import DatasetMapper
 
 __all__ = [
-    "FlyingChairsMapper"
+    "DatasetMapper"
 ]

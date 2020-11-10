@@ -25,7 +25,7 @@ from detectron2.utils.logger import setup_logger
 from detectron2.modeling import build_flow_net
 
 from flownet.config import add_flownet_config
-from flownet.data import FlyingChairsMapper
+from flownet.data import DatasetMapper
 
 
 class Trainer(DefaultTrainer):
@@ -78,12 +78,12 @@ class Trainer(DefaultTrainer):
 
     @classmethod
     def build_train_loader(cls, cfg):
-        mapper = FlyingChairsMapper(cfg, True)
+        mapper = DatasetMapper(cfg, is_train=True)
         return build_detection_train_loader(cfg, mapper=mapper)
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
-        mapper = FlyingChairsMapper(cfg, False)
+        mapper = DatasetMapper(cfg, is_train=False)
         return build_detection_test_loader(cfg, dataset_name, mapper=mapper)
 
 
