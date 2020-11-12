@@ -270,7 +270,8 @@ def register_all_flying_chairs(root):
         register_flying_chairs(
             name,
             meta,
-            os.path.join(root, json_file)
+            os.path.join(root, json_file),
+            root
         )
 
 

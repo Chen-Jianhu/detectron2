@@ -514,6 +514,21 @@ _C.MODEL.RESNETS.DEFORM_NUM_GROUPS = 1
 
 
 # ---------------------------------------------------------------------------- #
+# FLOW_NET options (FLOW_NET = {FlowNet, FlowNet2.0}
+# ---------------------------------------------------------------------------- #
+_C.MODEL.FLOW_NET = CN()
+_C.MODEL.FLOW_NET.NAME = "FlowNetS"
+_C.MODEL.FLOW_NET.PIXEL_MEAN = [0.45, 0.432, 0.411]
+_C.MODEL.FLOW_NET.PIXEL_STD = [1, 1, 1]
+_C.MODEL.FLOW_NET.NEGATIVE_SLOPE = 0.1
+# training weight for each scale, from highest resolution (flow2) to lowest (flow6)
+_C.MODEL.FLOW_NET.MULTISCALE_WEIGHTS = [0.005, 0.01, 0.02, 0.08, 0.32]
+# value by which flow will be divided.
+# Original value is 20 but 1 with batchNorm gives good results
+_C.MODEL.FLOW_NET.FLOW_DIV = 20.
+
+
+# ---------------------------------------------------------------------------- #
 # Solver
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()

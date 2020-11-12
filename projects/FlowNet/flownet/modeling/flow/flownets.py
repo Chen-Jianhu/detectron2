@@ -54,6 +54,13 @@ def multiscale_endpoint_error(pred_flows, target_flow, weights=None):
     return losses
 
 
+def crop_like(input, target):
+    if input.shape[2:] == target.shape[2:]:
+        return input
+    else:
+        return input[:, :, :target.size(2), :target.size(3)]
+
+
 @FLOW_NET_REGISTRY.register()
 class FlowNetS(nn.Module):
 
@@ -159,23 +166,23 @@ class FlowNetS(nn.Module):
 
         flow6 = self.pred6(out_conv6)
 
-        flow6_up = self.upsample_flow6to5(flow6)
-        out_deconv5 = self.deconv5(out_conv6)
+        flow6_up = crop_like(self.upsample_flow6to5(flow6), out_conv5)
+        out_deconv5 = crop_like(self.deconv5(out_conv6), out_conv5)
         concat5 = cat((out_conv5, out_deconv5, flow6_up), 1)
         flow5 = self.pred5(concat5)
 
-        flow5_up = self.upsample_flow5to4(flow5)
-        out_deconv4 = self.deconv4(concat5)
+        flow5_up = crop_like(self.upsample_flow5to4(flow5), out_conv4)
+        out_deconv4 = crop_like(self.deconv4(concat5), out_conv4)
         concat4 = cat((out_conv4, out_deconv4, flow5_up), 1)
         flow4 = self.pred4(concat4)
 
-        flow4_up = self.upsample_flow4to3(flow4)
-        out_deconv3 = self.deconv3(concat4)
+        flow4_up = crop_like(self.upsample_flow4to3(flow4), out_conv3)
+        out_deconv3 = crop_like(self.deconv3(concat4), out_conv3)
         concat3 = cat((out_conv3, out_deconv3, flow4_up), 1)
         flow3 = self.pred3(concat3)
 
-        flow3_up = self.upsample_flow3to2(flow3)
-        out_deconv2 = self.deconv2(concat3)
+        flow3_up = crop_like(self.upsample_flow3to2(flow3), out_conv2)
+        out_deconv2 = crop_like(self.deconv2(concat3), out_conv2)
         concat2 = cat((out_conv2, out_deconv2, flow3_up), 1)
         flow2 = self.pred2(concat2)
 

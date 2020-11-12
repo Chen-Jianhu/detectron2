@@ -33,8 +33,7 @@ INPUT:
     TYPE: "absolute"
     SIZE: [320, 448]
   FLIP: "" # optional: ["" | "horizontal" | "vertical" | "both"]
-
 TEST:
-  EVAL_PERIOD: 10000
+  EVAL_PERIOD: 5000
 VIS_PERIOD: 5000
 VERSION: 2

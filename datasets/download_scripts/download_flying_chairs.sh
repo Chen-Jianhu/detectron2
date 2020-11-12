@@ -56,4 +56,10 @@ echo "Start to unzip the dataset ..."
 cd ${ROOT}
 unzip FlyingChairs.zip
 
+wget http://det.cjh.zone/detectron2/datasets/FlyingChairs/flying_chairs_train.json \
+    -P "${ROOT}/FlyingChairs_release/"
+
+wget http://det.cjh.zone/detectron2/datasets/FlyingChairs/flying_chairs_test.json \
+    -P "${ROOT}/FlyingChairs_release/"
+
 echo "Complete!"

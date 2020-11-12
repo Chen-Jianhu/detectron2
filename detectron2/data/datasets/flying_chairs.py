@@ -18,9 +18,9 @@ from detectron2.data import DatasetCatalog, MetadataCatalog
 logger = logging.getLogger(__name__)
 
 
-def register_flying_chairs(name, metadata, json_file):
+def register_flying_chairs(name, metadata, json_file, image_root):
     DatasetCatalog.register(name, lambda: load_flying_chairs_json(name, json_file))
-    MetadataCatalog.get(name).set(**metadata)
+    MetadataCatalog.get(name).set(**metadata, image_root=image_root)
 
 
 def get_flying_chairs_meta():
@@ -32,6 +32,7 @@ def load_flying_chairs_json(dataset_name, json_file):
     with PathManager.open(json_file) as f:
         json_str = f.read()
     dataset_dicts = json.loads(json_str)
+
     logger.info(
         "Loaded {} image pairs and flow map from {}.".format(
             len(dataset_dicts), json_file
