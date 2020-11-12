@@ -7,7 +7,7 @@
 @License       :   Copyright(C), USTC
 @Desc          :   None
 """
-
+import os.path as osp
 import logging
 import json
 
@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 def register_flying_chairs(name, metadata, json_file, image_root):
-    DatasetCatalog.register(name, lambda: load_flying_chairs_json(name, json_file))
-    MetadataCatalog.get(name).set(**metadata, image_root=image_root)
+    DatasetCatalog.register(name, lambda: load_flying_chairs_json(name, json_file, image_root))
+    MetadataCatalog.get(name).set(**metadata)
 
 
 def get_flying_chairs_meta():
@@ -28,10 +28,18 @@ def get_flying_chairs_meta():
     return meta
 
 
-def load_flying_chairs_json(dataset_name, json_file):
+def load_flying_chairs_json(dataset_name, json_file, image_root):
     with PathManager.open(json_file) as f:
         json_str = f.read()
     dataset_dicts = json.loads(json_str)
+
+    for idx in range(len(dataset_dicts)):
+        dataset_dicts[idx]["image_file1"] = osp.join(
+            image_root, dataset_dicts[idx]["image_file1"])
+        dataset_dicts[idx]["image_file2"] = osp.join(
+            image_root, dataset_dicts[idx]["image_file2"])
+        dataset_dicts[idx]["flow_map_file"] = osp.join(
+            image_root, dataset_dicts[idx]["flow_map_file"])
 
     logger.info(
         "Loaded {} image pairs and flow map from {}.".format(
