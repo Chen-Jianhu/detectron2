@@ -1,0 +1,7 @@
+_BASE_: ../../configs/Base-YOLOv3-Darknet53.yaml
+MODEL:
+  WEIGHTS: /home/jhchen/repos/detectron2/projects/YOLOv3/labs/darknet53_448.pkl
+INPUT:
+  RESIZE:
+    ENABLED: True
+    SIZE: (320, 320)

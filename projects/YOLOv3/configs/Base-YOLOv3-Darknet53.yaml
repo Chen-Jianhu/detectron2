@@ -1,0 +1,58 @@
+MODEL:
+  META_ARCHITECTURE: "YOLOv3"
+  BACKBONE:
+    NAME: "build_darknet_backbone"
+    FREEZE_AT: 0
+  DARKNET:
+    DEPTH: 53
+    WEIGHTS: "https://pjreddie.com/media/files/darknet53_448.weights"
+    OUT_FEATURES: ["stage3", "stage4", "stage5"]
+    STEM_OUT_CHANNELS: 32
+    NORM: "BN"
+  YOLOV3:
+    NUM_CLASSES: 80
+    IN_FEATURES: ["stage3", "stage4", "stage5"]
+    IOU_THRESHOLDS: [0.5, 0.5]
+    IOU_LABELS: [0, -1, 1]
+    BBOX_REG_WEIGHTS: [10.0, 10.0, 5.0, 5.0]
+    # Loss parameters:
+    LOSS_ALPHA: 1.0
+    SMOOTH_L1_LOSS_BETA: 1.0
+    NEGATIVE_POSITIVE_RATIO: 3.0
+    # Inference parameters:
+    SCORE_THRESH_TEST: 0.02
+    NMS_THRESH_TEST: 0.45
+  ANCHOR_GENERATOR:
+    NAME: "YOLOAnchorGenerator"
+    SIZES: [
+      [[10, 13], [16, 30], [33, 23]],         # for stage3 features
+      [[30, 61], [62, 45], [42, 119]],        # for stage4 features
+      [[116, 90], [156, 198], [373, 326]],    # for stage5 features
+    ]
+DATASETS:
+  TRAIN: ("coco_2017_train",)
+  TEST: ("coco_2017_val",)
+SOLVER:
+  IMS_PER_BATCH: 64
+  BASE_LR: 0.001
+  MOMENTUM: 0.9
+  WEIGHT_DECAY: 0.0005
+  STEPS: (400000, 450000)
+  MAX_ITER: 500200
+INPUT:
+  RESIZE:
+    ENABLED: True
+    SIZE: (608, 608)
+TEST:
+  EVAL_PERIOD: 10000
+# Need to setting some env variables
+# - "kodo_prefix": default value is "http://det.cjh.zone/detectron2/".
+# - "kodo_access_key": KODO access key.
+# - "kodo_secret_key": KODO secret key.
+# See: https://www.qiniu.com/products/kodo for more details.
+OUTPUT_DUMP:
+  ENABLED: False
+  PLATFORMS: ["KODO"]
+  BUCKETS: ["det"]
+VIS_PERIOD: 1000
+VERSION: 2
