@@ -149,60 +149,46 @@ def flow2img(flow_data):
     return np.uint8(img)
 
 
-def visualize_sample_from_array(image1=None, image2=None, flow_map=None, format="BGR"):
-    print("sample infos:")
-    if image1 is not None:
-        print("  image 1 shape: {}".format(image1.shape))
-    if image2 is not None:
-        print("  image 2 shape: {}".format(image2.shape))
-    if flow_map is not None:
-        print("  flow_map shape: {}".format(flow_map.shape))
+def visualize_sample_from_array(image1, image2, flow_map, img_format="BGR", save=False):
+    img_format = img_format.upper()
+    assert img_format in ["RGB", "BGR"], "Only support 'RGB' and 'BGR' image format."
+    assert image1.shape[:2] == image2.shape[:2] == flow_map.shape[:2], (
+        "Different shape between image and flow: img1({}), img2({}), flow({})".format(
+            image1.shape[:2], image2.shape[:2], flow_map.shape[:2]
+        )
+    )
 
-    assert format in ["RGB", "BGR"], "Only support 'RGB' and 'BGR' image format."
-    if format == "RGB":
-        if image1 is not None:
-            image1 = image1[:, :, ::-1]
-        if image2 is not None:
-            image2 = image2[:, :, ::-1]
-        if flow_map is not None:
-            flow_map = flow_map[:, :, ::-1]
+    flow_map = flow2img(flow_map)
+    if img_format == "RGB":
+        image1 = image1[:, :, ::-1]
+        image2 = image2[:, :, ::-1]
+        flow_map = flow_map[:, :, ::-1]
 
-    if (image1 is not None) or (image2 is not None) or (flow_map is not None):
-        # Visualization
-        if image1 is not None:
-            cv2.imshow("image1", image1)
-        if image2 is not None:
-            cv2.imshow("image2", image2)
-        if flow_map is not None:
-            cv2.imshow("flow_map", flow2img(flow_map))
+    img = np.concatenate([image1, image2, flow_map], axis=0)
+
+    if save:
+        cv2.imwrite("visualize_sample_from_array.jpg", img)
+    else:
+        cv2.imshow("visualize_sample_from_array", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    else:
-        print("No data to visualize.")
 
 
-def visualize_sample_from_file(image_file1=None, image_file2=None, flow_map_file=None):
+def visualize_sample_from_file(image_file1=None, image_file2=None, flow_map_file=None, save=False):
     print("sample infos:")
     print("  image file 1: {}".format(image_file1))
     print("  image file 2: {}".format(image_file2))
     print("  flow map file: {}".format(flow_map_file))
 
-    if image_file1:
-        image1 = utils.read_image(image_file1, format="BGR")
-    if image_file2:
-        image2 = utils.read_image(image_file2, format="BGR")
-    if flow_map_file:
-        flow_map = flow2img(read_flow(flow_map_file))
+    image1 = utils.read_image(image_file1, format="BGR")
+    image2 = utils.read_image(image_file2, format="BGR")
+    flow_map = flow2img(read_flow(flow_map_file))
 
-    if image_file1 or image_file2 or flow_map_file:
-        # Visualization
-        if image_file1:
-            cv2.imshow("image1", image1)
-        if image_file2:
-            cv2.imshow("image2", image2)
-        if flow_map_file:
-            cv2.imshow("flow_map", flow_map)
+    img = np.concatenate([image1, image2, flow_map], axis=0)
+
+    if save:
+        cv2.imwrite("visualize_sample_from_file.jpg", img)
+    else:
+        cv2.imshow("visualize_sample_from_file", img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-    else:
-        print("No files to visualize.")
