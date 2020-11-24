@@ -514,7 +514,7 @@ _C.MODEL.RESNETS.DEFORM_NUM_GROUPS = 1
 
 
 # ---------------------------------------------------------------------------- #
-# FLOW_NET options (FLOW_NET = {FlowNet, FlowNet2.0}
+# FLOW_NET options (FLOW_NET = {FlowNet, FlowNet2.0, et.})
 # ---------------------------------------------------------------------------- #
 _C.MODEL.FLOW_NET = CN()
 _C.MODEL.FLOW_NET.NAME = "FlowNetS"

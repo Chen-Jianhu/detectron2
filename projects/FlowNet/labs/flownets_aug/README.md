@@ -1,7 +1,7 @@
-# flownets  
+# flownets_aug  
 
 ## Evaluation results for flow:  
 
 |  ave_epe  |  
 |:---------:|  
-|   2.617   |
+|   4.912   |
