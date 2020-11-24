@@ -1,4 +1,14 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# -*- encoding: utf-8 -*-
+"""
+@File         : /detectron2/detectron2/evaluation/coco_evaluation.py
+@Time         : 2020-11-24 17:43:21
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-24 23:29:58
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
+"""
+
 import contextlib
 import copy
 import io
@@ -8,6 +18,7 @@ import logging
 import numpy as np
 import os
 import pickle
+import sys
 from collections import OrderedDict
 import pycocotools.mask as mask_util
 import torch
@@ -93,6 +104,7 @@ class COCOEvaluator(DatasetEvaluator):
 
     def reset(self):
         self._predictions = []
+        self._dump_infos = []  # per task
 
     def _tasks_from_config(self, cfg):
         """
@@ -151,6 +163,9 @@ class COCOEvaluator(DatasetEvaluator):
             self._eval_box_proposals(predictions)
         if "instances" in predictions[0]:
             self._eval_predictions(set(self._tasks), predictions)
+
+        _dump_to_markdown(self._dump_infos)
+
         # Copy so the caller can do whatever with results
         return copy.deepcopy(self._results)
 
@@ -278,9 +293,8 @@ class COCOEvaluator(DatasetEvaluator):
             metric: float(coco_eval.stats[idx] * 100 if coco_eval.stats[idx] >= 0 else "nan")
             for idx, metric in enumerate(metrics)
         }
-        self._logger.info(
-            "Evaluation results for {}: \n".format(iou_type) + create_small_table(results)
-        )
+        small_table = create_small_table(results)
+        self._logger.info("Evaluation results for {}: \n".format(iou_type) + small_table)
         if not np.isfinite(sum(results.values())):
             self._logger.info("Some metrics cannot be computed and is shown as NaN.")
 
@@ -315,6 +329,14 @@ class COCOEvaluator(DatasetEvaluator):
         self._logger.info("Per-category {} AP: \n".format(iou_type) + table)
 
         results.update({"AP-" + name: ap for name, ap in results_per_category})
+
+        dump_info_one_task = {
+            "task": iou_type,
+            "coco_eval": coco_eval,
+            "tables": [small_table, table],
+        }
+        self._dump_infos.append(dump_info_one_task)
+
         return results
 
 
@@ -536,3 +558,33 @@ def _evaluate_predictions_on_coco(
     coco_eval.summarize()
 
     return coco_eval
+
+
+def _dump_to_markdown(dump_infos, md_file="README.md"):
+    """
+    Dump a Markdown file that records the model evaluation metrics and corresponding scores
+    to the current working directory.
+    Args:
+        dump_infos (list[dict]): dump information for each task.
+        md_file (str): markdown file path.
+    """
+    title = os.getcwd().split("/")[-1]
+    with open(md_file, "w") as f:
+        f.write("# {}  ".format(title))
+        for dump_info_per_task in dump_infos:
+            task_name = dump_info_per_task["task"]
+            coco_eval = dump_info_per_task["coco_eval"]
+            tables = dump_info_per_task["tables"]
+            tables = [table.replace("\n", "  \n") for table in tables]
+            f.write("\n\n## Evaluation results for {}:  \n\n".format(task_name))
+            terminal = sys.stdout
+            f.write("```  \n")
+            sys.stdout = f
+            coco_eval.summarize()
+            sys.stdout.flush()
+            sys.stdout = terminal
+            f.write("```  \n")
+            f.write(tables[0])
+            f.write("\n\n### Per-category {} AP:  \n\n".format(task_name))
+            f.write(tables[1])
+            f.write("\n")

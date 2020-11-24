@@ -1,12 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   defaults.py
-@Time          :   2020/07/02 22:53:06
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/02 22:53:44
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/config/defaults.py
+@Time         : 2020-11-24 17:43:21
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-24 23:28:38
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 from .config import CfgNode as CN
@@ -550,6 +550,7 @@ _C.SOLVER.CHECKPOINT_PERIOD = 5000
 # each GPU will see 2 images per batch.
 # May be adjusted automatically if REFERENCE_WORLD_SIZE is set.
 _C.SOLVER.IMS_PER_BATCH = 16
+_C.SOLVER.BATCH_SUBDIVISIONS = 1
 
 # The reference number of workers (GPUs) this config is meant to train with.
 # It takes no effect when set to 0.
