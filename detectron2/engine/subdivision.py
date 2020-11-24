@@ -1,14 +1,13 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   defaults.py
-@Time          :   2020/07/02 22:53:06
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/02 22:54:11
-@License       :   Copyright(C), USTC
-@Desc          :
-
+@File         : /detectron2/detectron2/engine/subdivision.py
+@Time         : 2020-11-24 17:43:21
+@Author       : Chen-Jianhu (jhchen.mail@gmail.com)
+@Last Modified: 2020-11-24 23:27:38
+@License      : Copyright(C), USTC
+@Desc         : None
 """
+
 import time
 import torch
 
@@ -20,46 +19,7 @@ from detectron2.utils import comm
 
 class BatchSubdivisionTrainer(DefaultTrainer):
     """
-    A trainer with default training logic.
-    It is a subclass of :class:`SimpleTrainer` and instantiates everything needed from the
-    config. It does the following:
-
-    1. Create model, optimizer, scheduler, dataloader from the given config.
-    2. Load a checkpoint or `cfg.MODEL.WEIGHTS`, if exists, when
-       `resume_or_load` is called.
-    3. Register a few common hooks defined by the config.
-
-    It is created to simplify the **standard model training workflow** and reduce code boilerplate
-    for users who only need the standard training workflow, with standard features.
-    It means this class makes *many assumptions* about your training logic that
-    may easily become invalid in a new research. In fact, any assumptions beyond those made in the
-    :class:`SimpleTrainer` are too much for research.
-
-    The code of this class has been annotated about restrictive assumptions it makes.
-    When they do not work for you, you're encouraged to:
-
-    1. Overwrite methods of this class, OR:
-    2. Use :class:`SimpleTrainer`, which only does minimal SGD training and
-       nothing else. You can then add your own hooks if needed. OR:
-    3. Write your own training loop similar to `tools/plain_train_net.py`.
-
-    See the :doc:`/tutorials/training` tutorials for more details.
-
-    Note that the behavior of this class, like other functions/classes in
-    this file, is not stable, since it is meant to represent the "common default behavior".
-    It is only guaranteed to work well with the standard models and training workflow in detectron2.
-    To obtain more stable behavior, write your own training logic with other public APIs.
-
-    Examples:
-    ::
-        trainer = DefaultTrainer(cfg)
-        trainer.resume_or_load()  # load last checkpoint or MODEL.WEIGHTS
-        trainer.train()
-
-    Attributes:
-        scheduler:
-        checkpointer (DetectionCheckpointer):
-        cfg (CfgNode):
+    Usage same as DefaultTrainer.
     """
 
     def __init__(self, cfg):
@@ -122,7 +82,7 @@ class BatchSubdivisionTrainer(DefaultTrainer):
 
     def run_step(self):
         """
-        Implement the standard training logic described above.
+        Implement the batch subdivision training logic.
         """
         assert self.model.training, "[SimpleTrainer] model was changed to eval mode!"
         sum_data_time = 0.
@@ -149,9 +109,4 @@ class BatchSubdivisionTrainer(DefaultTrainer):
             self._write_metrics(metrics_dict)
             self._detect_anomaly(losses, loss_dict)
 
-        """
-        If you need gradient clipping/scaling or other processing, you can
-        wrap the optimizer with your custom `step()` method. But it is
-        suboptimal as explained in https://arxiv.org/abs/2006.15704 Sec 3.2.4
-        """
         self.optimizer.step()

@@ -1,4 +1,14 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# -*- encoding: utf-8 -*-
+"""
+@File         : /detectron2/detectron2/evaluation/coco_evaluation.py
+@Time         : 2020-11-24 17:43:21
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-24 23:29:58
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
+"""
+
 import contextlib
 import copy
 import io

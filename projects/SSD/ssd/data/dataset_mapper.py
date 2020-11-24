@@ -1,4 +1,14 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# -*- encoding: utf-8 -*-
+"""
+@File         : /detectron2/projects/SSD/ssd/data/dataset_mapper.py
+@Time         : 2020-11-24 17:43:21
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-24 23:34:12
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
+"""
+
 import copy
 import logging
 import numpy as np

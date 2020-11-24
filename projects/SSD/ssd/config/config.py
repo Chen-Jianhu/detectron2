@@ -1,4 +1,13 @@
-# -*- coding: utf-8 -*-
+# -*- encoding: utf-8 -*-
+"""
+@File         : /detectron2/projects/SSD/ssd/config/config.py
+@Time         : 2020-11-24 17:43:21
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-24 23:32:29
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
+"""
 
 from detectron2.config import CfgNode as CN
 

@@ -1,3 +1,14 @@
+# -*- encoding: utf-8 -*-
+"""
+@File         : /detectron2/projects/SSD/ssd/data/transforms/transform.py
+@Time         : 2020-11-24 17:43:21
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-24 23:35:35
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
+"""
+
 import random
 import cv2
 import numpy as np
