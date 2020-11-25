@@ -1,13 +1,14 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   dataset_mapper.py
-@Time          :   2020/06/20 7:17:07
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:25:49
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/projects/FlowNet/flownet/data/dataset_mapper.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:19:55
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
+
 import copy
 import logging
 import numpy as np

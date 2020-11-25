@@ -1,11 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   flownets.py
-@Time          :   2020/06/20 7:18:07
-@Author        :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:28:35
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/modeling/flow/flownets.py
+@Time         : 2020-11-24 14:39:31
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 00:00:03
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 import torch
@@ -22,7 +23,7 @@ from detectron2.utils.events import get_event_storage
 from detectron2.data.detection_utils import convert_image_to_rgb
 from detectron2.utils.flow_visualizer import flow2img
 from detectron2.losses import endpoint_error
-from detectron2.modeling import FLOW_NET_REGISTRY
+from .build import FLOW_NET_REGISTRY
 
 
 __all__ = ["FlowNetS"]

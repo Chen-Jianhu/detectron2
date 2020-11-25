@@ -1,12 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   split_flying_chairs.py
-@Time          :   2020/07/01 8:31:48
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/11/07 21:22:58
-@License       :   Copyright(C), USTC
-@Desc          :   This script is used for split Flying Chairs dataset.
+@File         : /detectron2/datasets/split_flying_chairs.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:23:00
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : This script is used for split Flying Chairs dataset.
 
 Usage:
     python split_flying_chairs.py

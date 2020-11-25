@@ -1,11 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   config.py
-@Time          :   2020/06/20 7:16:21
-@Author        :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:23:55
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/projects/FlowNet/flownet/config/config.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:20:36
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 from detectron2.config import CfgNode as CN

@@ -1,3 +1,14 @@
+# -*- encoding: utf-8 -*-
+"""
+@File         : /detectron2/projects/FlowNet/flownet/data/transforms_flow/augmentation_impl.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:20:05
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
+"""
+
 # -*- coding: utf-8 -*-
 import random
 import numpy as np

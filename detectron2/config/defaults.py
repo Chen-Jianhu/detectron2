@@ -1,12 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   defaults.py
-@Time          :   2020/07/02 22:53:06
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/02 22:53:44
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/config/defaults.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:23:27
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 from .config import CfgNode as CN
