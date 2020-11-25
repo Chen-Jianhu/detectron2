@@ -1,11 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   build.py
-@Time          :   2020/06/24 1:02:38
-@Author        :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:28:19
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/modeling/flow/build.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:26:41
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 import torch

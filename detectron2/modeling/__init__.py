@@ -23,7 +23,11 @@ from .meta_arch import (
     build_model,
     build_sem_seg_head,
 )
-from .flow import FLOW_NET_REGISTRY, build_flow_net
+from .flow import (
+    FLOW_NET_REGISTRY,
+    FlowNetS,
+    build_flow_net
+)
 from .postprocessing import detector_postprocess
 from .proposal_generator import (
     PROPOSAL_GENERATOR_REGISTRY,

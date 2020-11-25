@@ -1,12 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   train_net.py
-@Time          :   2020/06/20 7:21:07
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:34:37
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/projects/FlowNet/train_net.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 00:04:32
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 import logging

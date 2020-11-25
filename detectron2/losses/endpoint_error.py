@@ -1,11 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   endpoint_error.py
-@Time          :   2020/06/20 7:52:27
-@Author        :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:28:57
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/losses/endpoint_error.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:25:54
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 import torch

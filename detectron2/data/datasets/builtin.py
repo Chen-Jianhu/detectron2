@@ -1,16 +1,13 @@
-# -*- coding: utf-8 -*-
+# -*- encoding: utf-8 -*-
 """
-@File          :   builtin.py
-@Time          :   2020/06/20 7:10:46
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:25:17
-@License       :   Copyright(C), USTC
-@Desc          :   None
-"""
+@File         : /detectron2/detectron2/data/datasets/builtin.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:23:50
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         :
 
-
-"""
 This file registers pre-defined datasets at hard-coded paths, and their metadata.
 
 We hard-code metadata for common datasets. This will enable:

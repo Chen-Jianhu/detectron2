@@ -1,11 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   utils.py
-@Time          :   2020/06/20 7:19:25
-@Author        :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:25:57
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/data/flow_utils.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:24:55
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 import numpy as np

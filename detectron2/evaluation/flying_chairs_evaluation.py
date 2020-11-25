@@ -1,11 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   flying_chairs_evaluation.py
-@Time          :   2020/06/20 7:14:52
-@Author        :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:28:05
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/evaluation/flying_chairs_evaluation.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:25:29
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 import json

@@ -1,9 +1,9 @@
 # -*- encoding: utf-8 -*-
 """
 @File         : /detectron2/detectron2/config/defaults.py
-@Time         : 2020-11-24 17:43:21
+@Time         : 2020-11-24 23:58:33
 @Author       : Facebook, Inc. and its affiliates.
-@Last Modified: 2020-11-24 23:28:38
+@Last Modified: 2020-11-25 22:23:27
 @Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
 @License      : Copyright(C), USTC
 @Desc         : None

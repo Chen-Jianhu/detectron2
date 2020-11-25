@@ -1,11 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   visualizer.py
-@Time          :   2020/06/27 6:08:58
-@Author        :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/01 10:29:22
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/utils/flow_visualizer.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:27:03
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 import numpy as np

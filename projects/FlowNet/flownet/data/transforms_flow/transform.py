@@ -1,4 +1,14 @@
-# -*- coding: utf-8 -*-
+# -*- encoding: utf-8 -*-
+"""
+@File         : /detectron2/projects/FlowNet/flownet/data/transforms_flow/transform.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:20:12
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
+"""
+
 import numpy as np
 import torch
 
