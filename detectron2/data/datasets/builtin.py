@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+"""
+@File          :   builtin.py
+@Time          :   2020/06/20 7:10:46
+@Author        :   Facebook, Inc. and its affiliates.
+@Modified By   :   Chen-Jianhu (jhchen.mail@gmail.com)
+@Last Modified :   2020/07/01 10:25:17
+@License       :   Copyright(C), USTC
+@Desc          :   None
+"""
 
 
 """
@@ -28,6 +36,7 @@ from .coco import load_sem_seg, register_coco_instances
 from .coco_panoptic import register_coco_panoptic, register_coco_panoptic_separated
 from .lvis import get_lvis_instances_meta, register_lvis_instances
 from .pascal_voc import register_pascal_voc
+from .flying_chairs import get_flying_chairs_meta, register_flying_chairs
 
 # ==== Predefined datasets and splits for COCO ==========
 
@@ -246,6 +255,26 @@ def register_all_ade20k(root):
         )
 
 
+# ==== Predefined datasets and splits for FlyingChairs ==========
+
+
+_PREDEFINED_SPLITS_FLYING_CHAIRS = {
+    "flying_chairs_train": "FlyingChairs_release/flying_chairs_train.json",
+    "flying_chairs_test": "FlyingChairs_release/flying_chairs_test.json",
+}
+
+
+def register_all_flying_chairs(root):
+    meta = get_flying_chairs_meta()
+    for (name, json_file) in _PREDEFINED_SPLITS_FLYING_CHAIRS.items():
+        register_flying_chairs(
+            name,
+            meta,
+            os.path.join(root, json_file),
+            root
+        )
+
+
 # True for open source;
 # Internally at fb, we register them elsewhere
 if __name__.endswith(".builtin"):
@@ -257,3 +286,4 @@ if __name__.endswith(".builtin"):
     register_all_cityscapes_panoptic(_root)
     register_all_pascal_voc(_root)
     register_all_ade20k(_root)
+    register_all_flying_chairs(_root)
