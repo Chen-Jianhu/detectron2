@@ -1,8 +1,13 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-
-
+# -*- encoding: utf-8 -*-
 """
+@File         : /detectron2/detectron2/data/datasets/builtin.py
+@Time         : 2020-11-24 23:58:33
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 22:23:50
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         :
+
 This file registers pre-defined datasets at hard-coded paths, and their metadata.
 
 We hard-code metadata for common datasets. This will enable:
@@ -21,11 +26,14 @@ import os
 
 from detectron2.data import DatasetCatalog, MetadataCatalog
 
-from .builtin_meta import _get_builtin_metadata
+from .builtin_meta import ADE20K_SEM_SEG_CATEGORIES, _get_builtin_metadata
 from .cityscapes import load_cityscapes_instances, load_cityscapes_semantic
+from .cityscapes_panoptic import register_all_cityscapes_panoptic
+from .coco import load_sem_seg, register_coco_instances
+from .coco_panoptic import register_coco_panoptic, register_coco_panoptic_separated
 from .lvis import get_lvis_instances_meta, register_lvis_instances
 from .pascal_voc import register_pascal_voc
-from .register_coco import register_coco_instances, register_coco_panoptic_separated
+from .flying_chairs import get_flying_chairs_meta, register_flying_chairs
 
 # ==== Predefined datasets and splits for COCO ==========
 
@@ -119,6 +127,8 @@ def register_all_coco(root):
         prefix_instances = prefix[: -len("_panoptic")]
         instances_meta = MetadataCatalog.get(prefix_instances)
         image_root, instances_json = instances_meta.image_root, instances_meta.json_file
+        # The "separated" version of COCO panoptic segmentation dataset,
+        # e.g. used by Panoptic FPN
         register_coco_panoptic_separated(
             prefix,
             _get_builtin_metadata("coco_panoptic_separated"),
@@ -128,21 +138,37 @@ def register_all_coco(root):
             os.path.join(root, semantic_root),
             instances_json,
         )
+        # The "standard" version of COCO panoptic segmentation dataset,
+        # e.g. used by Panoptic-DeepLab
+        register_coco_panoptic(
+            prefix,
+            _get_builtin_metadata("coco_panoptic_standard"),
+            image_root,
+            os.path.join(root, panoptic_root),
+            os.path.join(root, panoptic_json),
+            instances_json,
+        )
 
 
 # ==== Predefined datasets and splits for LVIS ==========
 
 
 _PREDEFINED_SPLITS_LVIS = {
+    "lvis_v1": {
+        "lvis_v1_train": ("coco/", "lvis/lvis_v1_train.json"),
+        "lvis_v1_val": ("coco/", "lvis/lvis_v1_val.json"),
+        "lvis_v1_test_dev": ("coco/", "lvis/lvis_v1_image_info_test_dev.json"),
+        "lvis_v1_test_challenge": ("coco/", "lvis/lvis_v1_image_info_test_challenge.json"),
+    },
     "lvis_v0.5": {
-        "lvis_v0.5_train": ("coco/train2017", "lvis/lvis_v0.5_train.json"),
-        "lvis_v0.5_val": ("coco/val2017", "lvis/lvis_v0.5_val.json"),
-        "lvis_v0.5_val_rand_100": ("coco/val2017", "lvis/lvis_v0.5_val_rand_100.json"),
-        "lvis_v0.5_test": ("coco/test2017", "lvis/lvis_v0.5_image_info_test.json"),
+        "lvis_v0.5_train": ("coco/", "lvis/lvis_v0.5_train.json"),
+        "lvis_v0.5_val": ("coco/", "lvis/lvis_v0.5_val.json"),
+        "lvis_v0.5_val_rand_100": ("coco/", "lvis/lvis_v0.5_val_rand_100.json"),
+        "lvis_v0.5_test": ("coco/", "lvis/lvis_v0.5_image_info_test.json"),
     },
     "lvis_v0.5_cocofied": {
-        "lvis_v0.5_train_cocofied": ("coco/train2017", "lvis/lvis_v0.5_train_cocofied.json"),
-        "lvis_v0.5_val_cocofied": ("coco/val2017", "lvis/lvis_v0.5_val_cocofied.json"),
+        "lvis_v0.5_train_cocofied": ("coco/", "lvis/lvis_v0.5_train_cocofied.json"),
+        "lvis_v0.5_val_cocofied": ("coco/", "lvis/lvis_v0.5_val_cocofied.json"),
     },
 }
 
@@ -150,7 +176,6 @@ _PREDEFINED_SPLITS_LVIS = {
 def register_all_lvis(root):
     for dataset_name, splits_per_dataset in _PREDEFINED_SPLITS_LVIS.items():
         for key, (image_root, json_file) in splits_per_dataset.items():
-            # Assume pre-defined datasets live in `./datasets`.
             register_lvis_instances(
                 key,
                 get_lvis_instances_meta(dataset_name),
@@ -160,12 +185,10 @@ def register_all_lvis(root):
 
 
 # ==== Predefined splits for raw cityscapes images ===========
-
-
 _RAW_CITYSCAPES_SPLITS = {
-    "cityscapes_fine_{task}_train": ("cityscapes/leftImg8bit/train", "cityscapes/gtFine/train"),
-    "cityscapes_fine_{task}_val": ("cityscapes/leftImg8bit/val", "cityscapes/gtFine/val"),
-    "cityscapes_fine_{task}_test": ("cityscapes/leftImg8bit/test", "cityscapes/gtFine/test"),
+    "cityscapes_fine_{task}_train": ("cityscapes/leftImg8bit/train/", "cityscapes/gtFine/train/"),
+    "cityscapes_fine_{task}_val": ("cityscapes/leftImg8bit/val/", "cityscapes/gtFine/val/"),
+    "cityscapes_fine_{task}_test": ("cityscapes/leftImg8bit/test/", "cityscapes/gtFine/test/"),
 }
 
 
@@ -212,9 +235,52 @@ def register_all_pascal_voc(root):
         MetadataCatalog.get(name).evaluator_type = "pascal_voc"
 
 
-# Register them all under "./datasets"
-_root = os.getenv("DETECTRON2_DATASETS", "datasets")
-register_all_coco(_root)
-register_all_lvis(_root)
-register_all_cityscapes(_root)
-register_all_pascal_voc(_root)
+def register_all_ade20k(root):
+    root = os.path.join(root, "ADEChallengeData2016")
+    for name, dirname in [("train", "training"), ("val", "validation")]:
+        image_dir = os.path.join(root, "images", dirname)
+        gt_dir = os.path.join(root, "annotations_detectron2", dirname)
+        name = f"ade20k_sem_seg_{name}"
+        DatasetCatalog.register(
+            name, lambda x=image_dir, y=gt_dir: load_sem_seg(y, x, gt_ext="png", image_ext="jpg")
+        )
+        MetadataCatalog.get(name).set(
+            stuff_classes=ADE20K_SEM_SEG_CATEGORIES[:],
+            image_root=image_dir,
+            sem_seg_root=gt_dir,
+            evaluator_type="sem_seg",
+        )
+
+
+# ==== Predefined datasets and splits for FlyingChairs ==========
+
+
+_PREDEFINED_SPLITS_FLYING_CHAIRS = {
+    "flying_chairs_train": "FlyingChairs_release/flying_chairs_train.json",
+    "flying_chairs_test": "FlyingChairs_release/flying_chairs_test.json",
+}
+
+
+def register_all_flying_chairs(root):
+    meta = get_flying_chairs_meta()
+    for (name, json_file) in _PREDEFINED_SPLITS_FLYING_CHAIRS.items():
+        register_flying_chairs(
+            name,
+            meta,
+            os.path.join(root, json_file),
+            root
+        )
+
+
+# True for open source;
+# Internally at fb, we register them elsewhere
+if __name__.endswith(".builtin"):
+    # Assume pre-defined datasets live in `./datasets`.
+    _root = os.getenv("DETECTRON2_DATASETS", "datasets")
+    register_all_coco(_root)
+    register_all_lvis(_root)
+    register_all_cityscapes(_root)
+    register_all_cityscapes_panoptic(_root)
+    register_all_pascal_voc(_root)
+    register_all_ade20k(_root)
+    register_all_flying_chairs(_root)

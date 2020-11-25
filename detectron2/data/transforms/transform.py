@@ -20,7 +20,13 @@ except ImportError:
     # OpenCV is an optional dependency at the moment
     pass
 
-__all__ = ["ExtentTransform", "ResizeTransform", "RotationTransform"]
+__all__ = [
+    "ExtentTransform",
+    "ResizeTransform",
+    "RotationTransform",
+    "ColorTransform",
+    "PILColorTransform",
+]
 
 
 class ExtentTransform(Transform):
@@ -46,14 +52,21 @@ class ExtentTransform(Transform):
 
     def apply_image(self, img, interp=None):
         h, w = self.output_size
-        ret = Image.fromarray(img).transform(
+        if len(img.shape) > 2 and img.shape[2] == 1:
+            pil_image = Image.fromarray(img[:, :, 0], mode="L")
+        else:
+            pil_image = Image.fromarray(img)
+        pil_image = pil_image.transform(
             size=(w, h),
             method=Image.EXTENT,
             data=self.src_rect,
             resample=interp if interp else self.interp,
             fill=self.fill,
         )
-        return np.asarray(ret)
+        ret = np.asarray(pil_image)
+        if len(img.shape) > 2 and img.shape[2] == 1:
+            ret = np.expand_dims(ret, -1)
+        return ret
 
     def apply_coords(self, coords):
         # Transform image center from source coordinates into output coordinates
@@ -97,12 +110,19 @@ class ResizeTransform(Transform):
         assert len(img.shape) <= 4
 
         if img.dtype == np.uint8:
-            pil_image = Image.fromarray(img)
+            if len(img.shape) > 2 and img.shape[2] == 1:
+                pil_image = Image.fromarray(img[:, :, 0], mode="L")
+            else:
+                pil_image = Image.fromarray(img)
             interp_method = interp if interp is not None else self.interp
             pil_image = pil_image.resize((self.new_w, self.new_h), interp_method)
             ret = np.asarray(pil_image)
+            if len(img.shape) > 2 and img.shape[2] == 1:
+                ret = np.expand_dims(ret, -1)
         else:
             # PIL only supports uint8
+            if any(x < 0 for x in img.strides):
+                img = np.ascontiguousarray(img)
             img = torch.from_numpy(img)
             shape = list(img.shape)
             shape_4d = shape[:2] + [1] * (4 - len(shape)) + shape[2:]
@@ -214,6 +234,63 @@ class RotationTransform(Transform):
             (rotation.bound_w - self.w) // 2, (rotation.bound_h - self.h) // 2, self.w, self.h
         )
         return TransformList([rotation, crop])
+
+
+class ColorTransform(Transform):
+    """
+    Generic wrapper for any photometric transforms.
+    These transformations should only affect the color space and
+        not the coordinate space of the image (e.g. annotation
+        coordinates such as bounding boxes should not be changed)
+    """
+
+    def __init__(self, op):
+        """
+        Args:
+            op (Callable): operation to be applied to the image,
+                which takes in an ndarray and returns an ndarray.
+        """
+        if not callable(op):
+            raise ValueError("op parameter should be callable")
+        super().__init__()
+        self._set_attributes(locals())
+
+    def apply_image(self, img):
+        return self.op(img)
+
+    def apply_coords(self, coords):
+        return coords
+
+    def inverse(self):
+        return NoOpTransform()
+
+    def apply_segmentation(self, segmentation):
+        return segmentation
+
+
+class PILColorTransform(ColorTransform):
+    """
+    Generic wrapper for PIL Photometric image transforms,
+        which affect the color space and not the coordinate
+        space of the image
+    """
+
+    def __init__(self, op):
+        """
+        Args:
+            op (Callable): operation to be applied to the image,
+                which takes in a PIL Image and returns a transformed
+                PIL Image.
+                For reference on possible operations see:
+                - https://pillow.readthedocs.io/en/stable/
+        """
+        if not callable(op):
+            raise ValueError("op parameter should be callable")
+        super().__init__(op)
+
+    def apply_image(self, img):
+        img = Image.fromarray(img)
+        return np.asarray(super().apply_image(img))
 
 
 def HFlip_rotated_box(transform, rotated_boxes):

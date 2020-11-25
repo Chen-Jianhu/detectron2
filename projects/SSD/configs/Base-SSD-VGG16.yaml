@@ -1,0 +1,58 @@
+MODEL:
+  META_ARCHITECTURE: "SSD"
+  BACKBONE:
+    NAME: "build_ssd_vgg_backbone"
+  VGG:
+    ARCH: "D"
+    OUT_FEATURES: ["conv4_3", "conv7"]
+    POOL_ARGS:
+      POOL3: [2, 2, 0, True]  # k, s, p, ceil_model
+      POOL4: [3, 1, 1, False]  # k, s, p, ceil_model
+    FC_TO_CONV: True
+  SSD:
+    NUM_CLASSES: 80
+    IN_FEATURES: ["conv4_3", "conv7"]
+    EXTRA_LAYER_ARCH:
+      SIZE300: [256, 'S', 512, 128, 'S', 256, 128, 256, 128, 256]
+      SIZE512: [256, 'S', 512, 128, 'S', 256, 128, 'S', 256, 128, 'S', 256, 128, 256]
+    IOU_THRESHOLDS: [0.5, 0.5]
+    IOU_LABELS: [0, -1, 1]
+    BBOX_REG_WEIGHTS: [10.0, 10.0, 5.0, 5.0]
+    L2NORM_SCALE: 20.0
+    # Loss parameters:
+    LOSS_ALPHA: 1.0
+    SMOOTH_L1_LOSS_BETA: 1.0
+    NEGATIVE_POSITIVE_RATIO: 3.0
+    # Inference parameters:
+    SCORE_THRESH_TEST: 0.02
+    NMS_THRESH_TEST: 0.45
+DATASETS:
+  TRAIN: ("coco_2017_train",)
+  TEST: ("coco_2017_val",)
+SOLVER:
+  IMS_PER_BATCH: 32
+  BASE_LR: 1e-3
+  WEIGHT_DECAY: 0.0005
+  STEPS: (160000, 200000)
+  MAX_ITER: 240000
+INPUT:
+  COLOR_AUG: True
+  SWAP_CHANNELS: True
+  EXPAND: True
+  MIN_IOU_CROP : True
+  RESIZE:
+    ENABLED: True
+    SIZE: (300, 300)
+TEST:
+  EVAL_PERIOD: 10000
+# Need to setting some env variables
+# - "kodo_prefix": default value is "http://det.cjh.zone/detectron2/".
+# - "kodo_access_key": KODO access key.
+# - "kodo_secret_key": KODO secret key.
+# See: https://www.qiniu.com/products/kodo for more details.
+OUTPUT_DUMP:
+  ENABLED: False
+  PLATFORMS: ["KODO"]
+  BUCKETS: ["det"]
+VIS_PERIOD: 1000
+VERSION: 2

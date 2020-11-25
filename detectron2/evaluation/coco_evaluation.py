@@ -1,4 +1,14 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# -*- encoding: utf-8 -*-
+"""
+@File         : /detectron2/detectron2/evaluation/coco_evaluation.py
+@Time         : 2020-11-24 17:43:21
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-24 23:29:58
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
+"""
+
 import contextlib
 import copy
 import io
@@ -8,6 +18,7 @@ import logging
 import numpy as np
 import os
 import pickle
+import sys
 from collections import OrderedDict
 import pycocotools.mask as mask_util
 import torch
@@ -19,6 +30,7 @@ from tabulate import tabulate
 import detectron2.utils.comm as comm
 from detectron2.data import MetadataCatalog
 from detectron2.data.datasets.coco import convert_to_coco_json
+from detectron2.evaluation.fast_eval_api import COCOeval_opt
 from detectron2.structures import Boxes, BoxMode, pairwise_iou
 from detectron2.utils.logger import create_small_table
 
@@ -31,9 +43,12 @@ class COCOEvaluator(DatasetEvaluator):
     for keypoint detection outputs using COCO's metrics.
     See http://cocodataset.org/#detection-eval and
     http://cocodataset.org/#keypoints-eval to understand its metrics.
+
+    In addition to COCO, this evaluator is able to support any bounding box detection,
+    instance segmentation, or keypoint detection dataset.
     """
 
-    def __init__(self, dataset_name, cfg, distributed, output_dir=None):
+    def __init__(self, dataset_name, cfg, distributed, output_dir=None, *, use_fast_impl=True):
         """
         Args:
             dataset_name (str): name of the dataset to be evaluated.
@@ -46,7 +61,7 @@ class COCOEvaluator(DatasetEvaluator):
             cfg (CfgNode): config instance
             distributed (True): if True, will collect results from all ranks and run evaluation
                 in the main process.
-                Otherwise, will evaluate the results in the current process.
+                Otherwise, will only evaluate the results in the current process.
             output_dir (str): optional, an output directory to dump all
                 results predicted on the dataset. The dump contains two files:
 
@@ -54,19 +69,24 @@ class COCOEvaluator(DatasetEvaluator):
                    format that contains all the raw original predictions.
                 2. "coco_instances_results.json" a json file in COCO's result
                    format.
+            use_fast_impl (bool): use a fast but **unofficial** implementation to compute AP.
+                Although the results should be very close to the official implementation in COCO
+                API, it is still recommended to compute results with the official API for use in
+                papers.
         """
         self._tasks = self._tasks_from_config(cfg)
         self._distributed = distributed
         self._output_dir = output_dir
+        self._use_fast_impl = use_fast_impl
 
         self._cpu_device = torch.device("cpu")
         self._logger = logging.getLogger(__name__)
 
         self._metadata = MetadataCatalog.get(dataset_name)
         if not hasattr(self._metadata, "json_file"):
-            self._logger.warning(
-                f"json_file was not found in MetaDataCatalog for '{dataset_name}'."
-                " Trying to convert it to COCO format ..."
+            self._logger.info(
+                f"'{dataset_name}' is not registered by `register_coco_instances`."
+                " Therefore trying to convert it to COCO format ..."
             )
 
             cache_path = os.path.join(output_dir, f"{dataset_name}_coco_format.json")
@@ -84,6 +104,7 @@ class COCOEvaluator(DatasetEvaluator):
 
     def reset(self):
         self._predictions = []
+        self._dump_infos = []  # per task
 
     def _tasks_from_config(self, cfg):
         """
@@ -109,7 +130,6 @@ class COCOEvaluator(DatasetEvaluator):
         for input, output in zip(inputs, outputs):
             prediction = {"image_id": input["image_id"]}
 
-            # TODO this is ugly
             if "instances" in output:
                 instances = output["instances"].to(self._cpu_device)
                 prediction["instances"] = instances_to_coco_json(instances, input["image_id"])
@@ -143,6 +163,9 @@ class COCOEvaluator(DatasetEvaluator):
             self._eval_box_proposals(predictions)
         if "instances" in predictions[0]:
             self._eval_predictions(set(self._tasks), predictions)
+
+        _dump_to_markdown(self._dump_infos)
+
         # Copy so the caller can do whatever with results
         return copy.deepcopy(self._results)
 
@@ -179,11 +202,19 @@ class COCOEvaluator(DatasetEvaluator):
             self._logger.info("Annotations are not available for evaluation.")
             return
 
-        self._logger.info("Evaluating predictions ...")
+        self._logger.info(
+            "Evaluating predictions with {} COCO API...".format(
+                "unofficial" if self._use_fast_impl else "official"
+            )
+        )
         for task in sorted(tasks):
             coco_eval = (
                 _evaluate_predictions_on_coco(
-                    self._coco_api, coco_results, task, kpt_oks_sigmas=self._kpt_oks_sigmas
+                    self._coco_api,
+                    coco_results,
+                    task,
+                    kpt_oks_sigmas=self._kpt_oks_sigmas,
+                    use_fast_impl=self._use_fast_impl,
                 )
                 if len(coco_results) > 0
                 else None  # cocoapi does not handle empty results very well
@@ -262,11 +293,10 @@ class COCOEvaluator(DatasetEvaluator):
             metric: float(coco_eval.stats[idx] * 100 if coco_eval.stats[idx] >= 0 else "nan")
             for idx, metric in enumerate(metrics)
         }
-        self._logger.info(
-            "Evaluation results for {}: \n".format(iou_type) + create_small_table(results)
-        )
+        small_table = create_small_table(results)
+        self._logger.info("Evaluation results for {}: \n".format(iou_type) + small_table)
         if not np.isfinite(sum(results.values())):
-            self._logger.info("Note that some metrics cannot be computed.")
+            self._logger.info("Some metrics cannot be computed and is shown as NaN.")
 
         if class_names is None or len(class_names) <= 1:
             return results
@@ -299,6 +329,14 @@ class COCOEvaluator(DatasetEvaluator):
         self._logger.info("Per-category {} AP: \n".format(iou_type) + table)
 
         results.update({"AP-" + name: ap for name, ap in results_per_category})
+
+        dump_info_one_task = {
+            "task": iou_type,
+            "coco_eval": coco_eval,
+            "tables": [small_table, table],
+        }
+        self._dump_infos.append(dump_info_one_task)
+
         return results
 
 
@@ -477,7 +515,9 @@ def _evaluate_box_proposals(dataset_predictions, coco_api, thresholds=None, area
     }
 
 
-def _evaluate_predictions_on_coco(coco_gt, coco_results, iou_type, kpt_oks_sigmas=None):
+def _evaluate_predictions_on_coco(
+    coco_gt, coco_results, iou_type, kpt_oks_sigmas=None, use_fast_impl=True
+):
     """
     Evaluate the coco results using COCOEval API.
     """
@@ -493,18 +533,24 @@ def _evaluate_predictions_on_coco(coco_gt, coco_results, iou_type, kpt_oks_sigma
             c.pop("bbox", None)
 
     coco_dt = coco_gt.loadRes(coco_results)
-    coco_eval = COCOeval(coco_gt, coco_dt, iou_type)
-    # Use the COCO default keypoint OKS sigmas unless overrides are specified
-    if kpt_oks_sigmas:
-        coco_eval.params.kpt_oks_sigmas = np.array(kpt_oks_sigmas)
+    coco_eval = (COCOeval_opt if use_fast_impl else COCOeval)(coco_gt, coco_dt, iou_type)
 
     if iou_type == "keypoints":
-        num_keypoints = len(coco_results[0]["keypoints"]) // 3
-        assert len(coco_eval.params.kpt_oks_sigmas) == num_keypoints, (
-            "[COCOEvaluator] The length of cfg.TEST.KEYPOINT_OKS_SIGMAS (default: 17) "
-            "must be equal to the number of keypoints. However the prediction has {} "
-            "keypoints! For more information please refer to "
-            "http://cocodataset.org/#keypoints-eval.".format(num_keypoints)
+        # Use the COCO default keypoint OKS sigmas unless overrides are specified
+        if kpt_oks_sigmas:
+            assert hasattr(coco_eval.params, "kpt_oks_sigmas"), "pycocotools is too old!"
+            coco_eval.params.kpt_oks_sigmas = np.array(kpt_oks_sigmas)
+        # COCOAPI requires every detection and every gt to have keypoints, so
+        # we just take the first entry from both
+        num_keypoints_dt = len(coco_results[0]["keypoints"]) // 3
+        num_keypoints_gt = len(next(iter(coco_gt.anns.values()))["keypoints"]) // 3
+        num_keypoints_oks = len(coco_eval.params.kpt_oks_sigmas)
+        assert num_keypoints_oks == num_keypoints_dt == num_keypoints_gt, (
+            f"[COCOEvaluator] Prediction contain {num_keypoints_dt} keypoints. "
+            f"Ground truth contains {num_keypoints_gt} keypoints. "
+            f"The length of cfg.TEST.KEYPOINT_OKS_SIGMAS is {num_keypoints_oks}. "
+            "They have to agree with each other. For meaning of OKS, please refer to "
+            "http://cocodataset.org/#keypoints-eval."
         )
 
     coco_eval.evaluate()
@@ -512,3 +558,33 @@ def _evaluate_predictions_on_coco(coco_gt, coco_results, iou_type, kpt_oks_sigma
     coco_eval.summarize()
 
     return coco_eval
+
+
+def _dump_to_markdown(dump_infos, md_file="README.md"):
+    """
+    Dump a Markdown file that records the model evaluation metrics and corresponding scores
+    to the current working directory.
+    Args:
+        dump_infos (list[dict]): dump information for each task.
+        md_file (str): markdown file path.
+    """
+    title = os.getcwd().split("/")[-1]
+    with open(md_file, "w") as f:
+        f.write("# {}  ".format(title))
+        for dump_info_per_task in dump_infos:
+            task_name = dump_info_per_task["task"]
+            coco_eval = dump_info_per_task["coco_eval"]
+            tables = dump_info_per_task["tables"]
+            tables = [table.replace("\n", "  \n") for table in tables]
+            f.write("\n\n## Evaluation results for {}:  \n\n".format(task_name))
+            terminal = sys.stdout
+            f.write("```  \n")
+            sys.stdout = f
+            coco_eval.summarize()
+            sys.stdout.flush()
+            sys.stdout = terminal
+            f.write("```  \n")
+            f.write(tables[0])
+            f.write("\n\n### Per-category {} AP:  \n\n".format(task_name))
+            f.write(tables[1])
+            f.write("\n")

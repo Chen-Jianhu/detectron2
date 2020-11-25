@@ -1,15 +1,14 @@
-#!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """
-@File          :   convert_to_pretrained.py
-@Time          :   2020/11/06 20:53:38
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified :   2020/11/06 20:55:38
-@License       :   Copyright(C), USTC
-@Desc          :   Used for convert trained model to pretrained,
-                   they different is pretrained only keep model's
-                   trained parameters and model infos.
+@File         : /detectron2/tools/convert_to_pretrained.py
+@Time         : 2020-11-25 23:24:28
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-25 23:25:07
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : Used for convert trained model to pretrained,
+                they different is pretrained only keep model's
+                trained parameters and model infos.
 Usage:
     python convert_to_pretrained.py  /path/to/trained/model $(input_format) [$(matching_heuristics)]
 
@@ -17,7 +16,6 @@ Examples:
     python convert_to_pretrained.py ../model_final.pth BGR
 """
 
-# here put the import lib
 import os
 import sys
 import torch
