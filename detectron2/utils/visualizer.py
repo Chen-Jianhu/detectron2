@@ -1,4 +1,4 @@
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
+# Copyright (c) Facebook, Inc. and its affiliates.
 import colorsys
 import logging
 import math
@@ -10,12 +10,12 @@ import matplotlib.colors as mplc
 import matplotlib.figure as mplfigure
 import pycocotools.mask as mask_util
 import torch
-from fvcore.common.file_io import PathManager
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PIL import Image
 
 from detectron2.data import MetadataCatalog
 from detectron2.structures import BitMasks, Boxes, BoxMode, Keypoints, PolygonMasks, RotatedBoxes
+from detectron2.utils.file_io import PathManager
 
 from .colormap import random_color
 
@@ -126,7 +126,10 @@ class GenericMask:
         has_holes = (hierarchy.reshape(-1, 4)[:, 3] >= 0).sum() > 0
         res = res[-2]
         res = [x.flatten() for x in res]
-        res = [x for x in res if len(x) >= 6]
+        # These coordinates from OpenCV are integers in range [0, W-1 or H-1].
+        # We add 0.5 to turn them into real-value coordinate space. A better solution
+        # would be to first +0.5 and then dilate the returned polygon by 0.5.
+        res = [x + 0.5 for x in res if len(x) >= 6]
         return res, has_holes
 
     def polygons_to_mask(self, polygons):
@@ -319,8 +322,12 @@ class Visualizer:
     Style such as color, opacity, label contents, visibility of labels, or even the visibility
     of objects themselves (e.g. when the object is too small) may change according
     to different heuristics, as long as the results still look visually reasonable.
-    To obtain a consistent style, implement custom drawing functions with the primitive
-    methods instead.
+
+    To obtain a consistent style, you can implement custom drawing functions with the primitive
+    methods instead. If you need more customized visualization styles, you can process the data
+    yourself following their format documented in tutorials (:doc:`/tutorials/models`,
+    :doc`/tutorials/datasets`). This class does not intend to satisfy everyone's preference on
+    drawing styles.
 
     This visualizer focuses on high rendering quality rather than performance. It is not
     designed to be used for real-time applications.
@@ -524,7 +531,12 @@ class Visualizer:
             else:
                 keypts = None
 
-            boxes = [BoxMode.convert(x["bbox"], x["bbox_mode"], BoxMode.XYXY_ABS) for x in annos]
+            boxes = [
+                BoxMode.convert(x["bbox"], x["bbox_mode"], BoxMode.XYXY_ABS)
+                if len(x["bbox"]) == 4
+                else x["bbox"]
+                for x in annos
+            ]
 
             labels = [x["category_id"] for x in annos]
             colors = None
