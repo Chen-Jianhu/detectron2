@@ -1,17 +1,17 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   file_io.py
-@Time          :   2020/07/02 20:04:08
-@Author        :   Jianhu Chen (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/02 22:54:56
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/utils/file_io.py
+@Time         : 2020-11-26 12:51:43
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-27 20:30:47
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 import os
 import qiniu
 
-from fvcore.common import file_io
 from fvcore.common.file_io import (
     PathHandler,
     PathManagerBase as _PathManagerBase,
@@ -19,11 +19,31 @@ from fvcore.common.file_io import (
     OneDrivePathHandler
 )
 
+__all__ = ["PathManager", "PathHandler"]
+
+
+class Detectron2Handler(PathHandler):
+    """
+    Resolve anything that's hosted under detectron2's namespace.
+    """
+
+    PREFIX = "detectron2://"
+    S3_DETECTRON2_PREFIX = "https://dl.fbaipublicfiles.com/detectron2/"
+
+    def _get_supported_prefixes(self):
+        return [self.PREFIX]
+
+    def _get_local_path(self, path):
+        name = path[len(self.PREFIX):]
+        return PathManager.get_local_path(self.S3_DETECTRON2_PREFIX + name)
+
+    def _open(self, path, mode="r", **kwargs):
+        return PathManager.open(self._get_local_path(path), mode, **kwargs)
+
 
 class KODOHandler(PathHandler):
     """
     Resolve anything that's in KODO. (URL like KODO://)
-
     See: https://www.qiniu.com/products/kodo for more usage details.
     """
 
@@ -70,7 +90,6 @@ class PathManagerBase(_PathManagerBase):
     def upload(self, local: str, remote: str, **kwargs):
         """
         Upload the local file (not directory) to the specified remote URI.
-
         Args:
             local (str): path of the local file to be uploaded.
             remote (str): the remote uri.
@@ -80,9 +99,14 @@ class PathManagerBase(_PathManagerBase):
         return handler._upload(local, remote, **kwargs)
 
 
-file_io.PathManager = PathManagerBase()
-file_io.PathManager.register_handler(HTTPURLHandler())
-file_io.PathManager.register_handler(OneDrivePathHandler())
-file_io.PathManager.register_handler(KODOHandler())
+PathManager = PathManagerBase()
+"""
+This is a detectron2 project-specific PathManager.
+We try to stay away from global PathManager in fvcore as it
+introduces potential conflicts among other libraries.
+"""
 
-PathManager = file_io.PathManager
+PathManager.register_handler(HTTPURLHandler())
+PathManager.register_handler(OneDrivePathHandler())
+PathManager.register_handler(Detectron2Handler())
+PathManager.register_handler(KODOHandler())
