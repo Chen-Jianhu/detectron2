@@ -1,12 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   defaults.py
-@Time          :   2020/07/02 22:53:06
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/02 22:54:11
-@License       :   Copyright(C), USTC
-@Desc          :
+@File         : /detectron2/detectron2/engine/defaults.py
+@Time         : 2020-11-27 20:35:25
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-27 22:12:47
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         :
 
 This file contains components with some default boilerplate logic user may need
 in training / testing. They will not work for everyone, but many users may find them useful.

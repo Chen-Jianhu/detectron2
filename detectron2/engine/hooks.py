@@ -1,12 +1,12 @@
 # -*- encoding: utf-8 -*-
 """
-@File          :   hooks.py
-@Time          :   2020/06/20 17:52:20
-@Author        :   Facebook, Inc. and its affiliates.
-@Modified By   :   Jianhu Chen (jhchen.mail@gmail.com)
-@Last Modified :   2020/07/02 22:56:43
-@License       :   Copyright(C), USTC
-@Desc          :   None
+@File         : /detectron2/detectron2/engine/hooks.py
+@Time         : 2020-11-27 20:35:25
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-27 22:13:43
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
 """
 
 import re

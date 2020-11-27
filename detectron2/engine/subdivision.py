@@ -1,20 +1,18 @@
 # -*- encoding: utf-8 -*-
 """
 @File         : /detectron2/detectron2/engine/subdivision.py
-@Time         : 2020-11-24 17:43:21
-@Author       : Chen-Jianhu (jhchen.mail@gmail.com)
-@Last Modified: 2020-11-24 23:27:38
+@Time         : 2020-11-25 23:24:28
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-27 22:13:11
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
 @License      : Copyright(C), USTC
 @Desc         : None
 """
 
 import time
-import torch
-
-from .defaults import DefaultTrainer
-from .train_loop import _nullcontext
 
 from detectron2.utils import comm
+from .defaults import DefaultTrainer
 
 
 class BatchSubdivisionTrainer(DefaultTrainer):
@@ -100,13 +98,4 @@ class BatchSubdivisionTrainer(DefaultTrainer):
 
             losses.backward()
 
-        # use a new stream so the ops don't wait for DDP
-        with torch.cuda.stream(
-            torch.cuda.Stream()
-        ) if losses.device.type == "cuda" else _nullcontext():
-            metrics_dict = loss_dict
-            metrics_dict["data_time"] = sum_data_time
-            self._write_metrics(metrics_dict)
-            self._detect_anomaly(losses, loss_dict)
-
-        self.optimizer.step()
+        self._write_metrics(loss_dict, sum_data_time)
