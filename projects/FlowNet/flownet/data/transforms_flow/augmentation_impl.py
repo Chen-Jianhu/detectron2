@@ -116,6 +116,9 @@ class RandomFlip(Augmentation):
             return NoOpTransform()
 
         direction = self.direction
+
+        do_horizontal = False
+        do_vertical = False
         if direction == "horizontal" or direction == "both":
             do_horizontal = (self._rand_range() < self.prob)
         if direction == "vertical" or direction == "both":
