@@ -82,20 +82,29 @@ class BatchSubdivisionTrainer(DefaultTrainer):
         """
         Implement the batch subdivision training logic.
         """
-        assert self.model.training, "[SimpleTrainer] model was changed to eval mode!"
+        self._trainer.iter = self.iter
+
+        model = self._trainer.model
+        optimizer = self._trainer.optimizer
+        _data_loader_iter = self._trainer._data_loader_iter
+        _write_metrics = self._trainer._write_metrics
+
+        assert model.training, "[SimpleTrainer] model was changed to eval mode!"
+
+        optimizer.zero_grad()
+
         sum_data_time = 0.
-
-        self.optimizer.zero_grad()
-
         for _ in range(self.batch_subdivisions):
             start = time.perf_counter()
-            data = next(self._data_loader_iter)
+            data = next(_data_loader_iter)
             data_time = time.perf_counter() - start
             sum_data_time += data_time
 
-            loss_dict = self.model(data)
+            loss_dict = model(data)
             losses = sum(loss_dict.values())
 
             losses.backward()
 
-        self._write_metrics(loss_dict, sum_data_time)
+        _write_metrics(loss_dict, sum_data_time)
+
+        optimizer.step()

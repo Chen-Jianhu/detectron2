@@ -1,6 +1,6 @@
 _BASE_: ../../configs/Base-SSD-VGG16.yaml
 MODEL:
-  WEIGHTS: KODO://ImageNetPretrained/JianhuChen/vgg16_reducedfc.pkl
+  WEIGHTS: KODO://ImageNetPretrained/Chen-Jianhu/vgg16_reducedfc.pkl
   SSD:
     IMAGE_SIZE: 512
     FEATURE_MAP_SIZE: [64, 32, 16, 8, 4, 2, 1]
