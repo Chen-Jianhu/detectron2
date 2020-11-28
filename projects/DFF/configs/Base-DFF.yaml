@@ -2,12 +2,7 @@ MODEL:
   META_ARCHITECTURE: "DeepFeatureFlow"
   FLOWNET:
     NAME: "FlowNetS"
-    WEIGHTS: "KODO://FlyingChairsPretrained/JianhuChen/FlowNetS.pkl"
-    PIXEL_MEAN: [0.45, 0.432, 0.411]
-    PIXEL_STD: [1, 1, 1]
-    NORM: ""
-    NEGATIVE_SLOPE: 0.1
-    FLOW_DIV: 20.
+    WEIGHTS: "KODO://FlyingChairsPretrained/Chen-Jianhu/FlowNetS.pkl"
   DFF:
     FRAME_OFFSET_RANGE: [-9, 0]
     KEY_FRAME_DURATION: 10
