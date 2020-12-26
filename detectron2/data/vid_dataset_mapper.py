@@ -1,39 +1,34 @@
 # -*- encoding: utf-8 -*-
 """
-@File         : /detectron2/projects/DFF/dff/data/dataset_mapper.py
-@Time         : 2020-11-28 16:27:23
+@File         : /detectron2/detectron2/data/vid_dataset_mapper.py
+@Time         : 2020-12-06 16:17:15
 @Author       : Facebook, Inc. and its affiliates.
-@Last Modified: 2020-12-03 22:47:15
+@Last Modified: 2020-12-06 16:27:32
 @Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
 @License      : Copyright(C), USTC
 @Desc         : None
 """
 
-import logging
-import os
 import copy
+import logging
 import numpy as np
 import torch
-import random
 
 from typing import List, Union
 from PIL import Image
 
 from detectron2.config import configurable
-from detectron2.data import detection_utils as utils
-from detectron2.data import transforms as T
-from detectron2.data import MetadataCatalog
 from detectron2.utils.file_io import PathManager
-from detectron2.data.detection_utils import convert_PIL_to_numpy
 
+from . import MetadataCatalog
+from . import detection_utils as utils
+from . import transforms as T
 
 """
 This file contains the default mapping that's applied to "dataset dicts".
 """
 
-__all__ = ["DFFDatasetMapper"]
-
-logger = logging.getLogger(__name__)
+__all__ = ["ILSVRCVIDDatasetMapper"]
 
 
 def read_image(file_name, format=None):
@@ -58,10 +53,10 @@ def read_image(file_name, format=None):
         # except Exception:
         #     pass
 
-        return convert_PIL_to_numpy(image, format)
+        return utils.convert_PIL_to_numpy(image, format)
 
 
-class DFFDatasetMapper:
+class ILSVRCVIDDatasetMapper:
 
     @configurable
     def __init__(
@@ -70,9 +65,6 @@ class DFFDatasetMapper:
         *,
         augmentations: List[Union[T.Augmentation, T.Transform]],
         image_format: str,
-        frame_offset_min: int,
-        frame_offset_max: int,
-        key_frame_duration: int,
         vid_image_root: str
     ):
         """
@@ -82,14 +74,7 @@ class DFFDatasetMapper:
         self.is_train = is_train
         self.augmentations = T.AugmentationList(augmentations)
         self.image_format = image_format
-        self.frame_offset_min = frame_offset_min
-        self.frame_offset_max = frame_offset_max
-        self.key_frame_duration = key_frame_duration
         self.vid_image_root = vid_image_root
-
-        # For testing
-        self.key_frame_img = None
-        self.key_frame_seg_id = None
 
         logger = logging.getLogger(__name__)
         mode = "training" if is_train else "inference"
@@ -113,9 +98,6 @@ class DFFDatasetMapper:
             "is_train": is_train,
             "augmentations": augs,
             "image_format": cfg.INPUT.FORMAT,
-            "frame_offset_min": cfg.MODEL.DFF.FRAME_OFFSET_RANGE[0],
-            "frame_offset_max": cfg.MODEL.DFF.FRAME_OFFSET_RANGE[1],
-            "key_frame_duration": cfg.MODEL.DFF.KEY_FRAME_DURATION,
             "vid_image_root": vid_image_root,
         }
 
@@ -131,65 +113,25 @@ class DFFDatasetMapper:
         """
         dataset_dict = copy.deepcopy(dataset_dict)  # it will be modified by code below
 
-        image_cur = read_image(dataset_dict["file_name"], format=self.image_format)
-        utils.check_image_size(dataset_dict, image_cur)
+        image = read_image(dataset_dict["file_name"], format=self.image_format)
+        utils.check_image_size(dataset_dict, image)
 
-        # =============== Train ===============
-        if self.is_train:
-            pattern = dataset_dict.pop("pattern", None)
-            if pattern is None:
-                # DET set
-                image_ref = image_cur.copy()
-            else:
-                # VID set
-                offset = random.randint(self.frame_offset_min, self.frame_offset_max + 1)
-                ref_id = min(
-                    max(dataset_dict["frame_seg_id"] + offset, 0),
-                    dataset_dict["frame_seg_len"] - 1
-                )
-                ref_file_name = os.path.join(self.vid_image_root, pattern.format(ref_id))
-                image_ref = read_image(ref_file_name, format=self.image_format)
-
-        # =============== Test ===============
-        else:
+        if not self.is_train:
             dataset_dict.pop("annotations", None)
 
-            frame_seg_id = dataset_dict["frame_seg_id"]
-            if frame_seg_id % self.key_frame_duration == 0:
-                image_ref = image_cur.copy()
-                self.key_frame_img = image_cur.copy()
-                self.key_frame_seg_id = frame_seg_id
-            else:
-                assert self.key_frame_img is not None
-                assert 0 < frame_seg_id - self.key_frame_seg_id < self.key_frame_duration, (
-                    "frame_seg_id is {}, key_frame_seg_id is {}.".format(
-                        frame_seg_id, self.key_frame_seg_id
-                    )
-                )
-                image_ref = self.key_frame_img
-
-            if (frame_seg_id + 1) == dataset_dict["frame_seg_len"]:
-                self.key_frame_img = None
-                self.key_frame_seg_id = None
-
-        utils.check_image_size(dataset_dict, image_ref)
-
         # do data augmentations
-        aug_input = T.AugInput(image_cur)
+        aug_input = T.AugInput(image)
         transforms = self.augmentations(aug_input)
-        image_cur = aug_input.image
-        image_ref = transforms.apply_image(image_ref)
+        image = aug_input.image
 
         # Pytorch's dataloader is efficient on torch.Tensor due to shared-memory,
         # but not efficient on large generic data structures due to the use of pickle & mp.Queue.
         # Therefore it's important to use torch.Tensor.
-        dataset_dict["image_cur"] = torch.as_tensor(
-            np.ascontiguousarray(image_cur.transpose(2, 0, 1)))
-        dataset_dict["image_ref"] = torch.as_tensor(
-            np.ascontiguousarray(image_ref.transpose(2, 0, 1)))
+        dataset_dict["image"] = torch.as_tensor(
+            np.ascontiguousarray(image.transpose(2, 0, 1)))
 
         if "annotations" in dataset_dict:
-            image_shape = image_cur.shape[:2]  # h, w
+            image_shape = image.shape[:2]  # h, w
             # USER: Implement additional transformations if you have other types of data
             annos = [
                 utils.transform_instance_annotations(obj, transforms, image_shape)

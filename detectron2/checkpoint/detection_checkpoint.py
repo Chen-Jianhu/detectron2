@@ -1,3 +1,14 @@
+# -*- encoding: utf-8 -*-
+"""
+@File         : /detectron2/detectron2/checkpoint/detection_checkpoint.py
+@Time         : 2020-11-27 22:19:44
+@Author       : Facebook, Inc. and its affiliates.
+@Last Modified: 2020-11-30 22:15:09
+@Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
+@License      : Copyright(C), USTC
+@Desc         : None
+"""
+
 # Copyright (c) Facebook, Inc. and its affiliates.
 import pickle
 from fvcore.common.checkpoint import Checkpointer
@@ -6,6 +17,25 @@ import detectron2.utils.comm as comm
 from detectron2.utils.file_io import PathManager
 
 from .c2_model_loading import align_and_update_state_dicts
+
+
+def _fliter_out_key_startswith(state_dict, starts):
+    """
+    Args：
+        starts (str or list):
+    """
+    assert isinstance(starts, (str, list))
+    if isinstance(starts, str):
+        starts = [starts]
+
+    remove_keys = []
+    for s in starts:
+        for name in state_dict.keys():
+            if name.startswith(s):
+                remove_keys.append(name)
+
+    for key in remove_keys:
+        state_dict.pop(key)
 
 
 class DetectionCheckpointer(Checkpointer):
@@ -61,6 +91,12 @@ class DetectionCheckpointer(Checkpointer):
             self._convert_ndarray_to_tensor(checkpoint["model"])
             # convert weights by name-matching heuristics
             model_state_dict = self.model.state_dict()
+
+            if "flow_div" in checkpoint["model"].keys():
+                _fliter_out_key_startswith(model_state_dict, ["backbone", "roi_heads"])
+            else:
+                _fliter_out_key_startswith(model_state_dict, "flow_net")
+
             align_and_update_state_dicts(
                 model_state_dict,
                 checkpoint["model"],

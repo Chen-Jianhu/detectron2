@@ -6,7 +6,7 @@ INPUT:
   TRANSLATION:
     ENABLED: True
   ROTATION:
-    ENABLED: True
+    ENABLED: False 
   CROP:
     ENABLED: True
-  FLIP: "both"
+  FLIP: ""

@@ -12,6 +12,7 @@ from .build import (
 from .catalog import DatasetCatalog, MetadataCatalog, Metadata
 from .common import DatasetFromList, MapDataset
 from .dataset_mapper import DatasetMapper
+from .vid_dataset_mapper import ILSVRCVIDDatasetMapper
 
 # ensure the builtin datasets are registered
 from . import datasets, samplers  # isort:skip

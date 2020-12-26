@@ -34,6 +34,7 @@ from .coco_panoptic import register_coco_panoptic, register_coco_panoptic_separa
 from .lvis import get_lvis_instances_meta, register_lvis_instances
 from .pascal_voc import register_pascal_voc
 from .flying_chairs import get_flying_chairs_meta, register_flying_chairs
+from .ilsvrc_vid import get_ilsvrc_vid_instances_meta, register_ilsvrc_vid_instances
 
 # ==== Predefined datasets and splits for COCO ==========
 
@@ -276,6 +277,51 @@ def register_all_flying_chairs(root):
         )
 
 
+# ==== Predefined datasets and splits for ILSVRC2015 ==========
+
+
+_PREDEFINED_SPLITS_ILSVRC = {
+    "ilsvrc_det_train_30classes": (                      # dataset_name
+        "ILSVRC2015/Data/DET",                           # img_dir
+        "ILSVRC2015/Annotations/DET",                    # anno_dir
+        "ILSVRC2015/ImageSets/DET_train_30classes.txt",  # img_index
+    ),
+    "ilsvrc_vid_train_15frames": (
+        "ILSVRC2015/Data/VID",
+        "ILSVRC2015/Annotations/VID",
+        "ILSVRC2015/ImageSets/VID_train_15frames.txt",
+    ),
+    "ilsvrc_vid_train_every10frames": (
+        "ILSVRC2015/Data/VID",
+        "ILSVRC2015/Annotations/VID",
+        "ILSVRC2015/ImageSets/VID_train_every10frames.txt",
+    ),
+    # "ilsvrc_vid_val_frames": (
+    #     "ILSVRC2015/Data/VID",
+    #     "ILSVRC2015/Annotations/VID",
+    #     "ILSVRC2015/ImageSets/VID_val_frames.txt",
+    # ),
+    "ilsvrc_vid_val_videos": (
+        "ILSVRC2015/Data/VID",
+        "ILSVRC2015/Annotations/VID",
+        "ILSVRC2015/ImageSets/VID_val_videos.txt",
+    ),
+}
+
+
+def register_all_ilsvrc_vid(root):
+    meta = get_ilsvrc_vid_instances_meta()
+    for (name, (img_dir, anno_dir, img_index)) in _PREDEFINED_SPLITS_ILSVRC.items():
+        register_ilsvrc_vid_instances(
+            name,
+            meta,
+            os.path.join(root, img_dir),
+            os.path.join(root, anno_dir),
+            os.path.join(root, img_index),
+            "train" in name,
+        )
+
+
 # True for open source;
 # Internally at fb, we register them elsewhere
 if __name__.endswith(".builtin"):
@@ -288,3 +334,4 @@ if __name__.endswith(".builtin"):
     register_all_pascal_voc(_root)
     register_all_ade20k(_root)
     register_all_flying_chairs(_root)
+    register_all_ilsvrc_vid(_root)

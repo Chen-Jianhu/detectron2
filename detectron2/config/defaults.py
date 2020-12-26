@@ -526,6 +526,25 @@ _C.MODEL.FLOW_NET.MULTISCALE_WEIGHTS = [0.005, 0.01, 0.02, 0.08, 0.32]
 # value by which flow will be divided.
 # Original value is 20 but 1 with batchNorm gives good results
 _C.MODEL.FLOW_NET.FLOW_DIV = 20.
+_C.MODEL.FLOW_NET.WEIGHTS = ""
+
+
+# ---------------------------------------------------------------------------- #
+# Deep Feature Flow options
+# https://arXiv.org/abs/1611.07715
+# ---------------------------------------------------------------------------- #
+_C.MODEL.DFF = CN()
+_C.MODEL.DFF.FRAME_OFFSET_RANGE = [-9, 0]
+_C.MODEL.DFF.KEY_FRAME_DURATION = 10
+
+
+# ---------------------------------------------------------------------------- #
+# Flow-Guided Feature Aggregation options
+# https://arXiv.org/abs/1703.10025
+# ---------------------------------------------------------------------------- #
+_C.MODEL.FGFA = CN()
+_C.MODEL.FGFA.AGGREGATION_RANGE_TRAIN = 2
+_C.MODEL.FGFA.AGGREGATION_RANGE_TEST = 5
 
 
 # ---------------------------------------------------------------------------- #

@@ -8,6 +8,8 @@ from .panoptic_evaluation import COCOPanopticEvaluator
 from .pascal_voc_evaluation import PascalVOCDetectionEvaluator
 from .sem_seg_evaluation import SemSegEvaluator
 from .flying_chairs_evaluation import FlyingChairsEvaluator
+from .ilsvrc_vid_evaluation import ILSVRCVIDEvaluator
+
 from .testing import print_csv_format, verify_results
 
 __all__ = [k for k in globals().keys() if not k.startswith("_")]

@@ -1,24 +1,38 @@
 # -*- encoding: utf-8 -*-
 """
-@File         : /detectron2/projects/DFF/train_net.py
-@Time         : 2020-11-28 16:27:24
+@File         : /detectron2/projects/VIDBaseline/train_net.py
+@Time         : 2020-12-06 15:25:32
 @Author       : Facebook, Inc. and its affiliates.
-@Last Modified: 2020-12-01 00:59:17
+@Last Modified: 2020-12-06 15:25:33
 @Modified By  : Chen-Jianhu (jhchen.mail@gmail.com)
 @License      : Copyright(C), USTC
-@Desc         : None
+@Desc         :
+
+Detection Training Script.
+
+This scripts reads a given config file and runs the training or evaluation.
+It is an entry point that is made to train standard models in detectron2.
+
+In order to let one script support training of many models,
+this script contains logic that are specific to these built-in models and therefore
+may not be suitable for your own project.
+For example, your research project perhaps only needs a single "evaluator".
+
+Therefore, we recommend you to use detectron2 as an library and take
+this file as an example of how to use the library.
+You may want to write your own script with your datasets and other customizations.
 """
 
+import logging
 import os
 import torch
-import logging
 
-from torch.nn.parallel import DistributedDataParallel
 import detectron2.utils.comm as comm
-
+from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg
 from detectron2.data import (
     MetadataCatalog,
+    ILSVRCVIDDatasetMapper,
     build_detection_train_loader,
     build_detection_test_loader
 )
@@ -35,45 +49,9 @@ from detectron2.evaluation import (
     DatasetEvaluators,
     verify_results,
 )
-from detectron2.utils.logger import setup_logger
-from detectron2.checkpoint import DetectionCheckpointer
-from detectron2.utils.env import TORCH_VERSION
-
-from dff.data import DFFDatasetMapper
 
 
 class Trainer(BatchSubdivisionTrainer):
-
-    def resume_or_load(self, resume=True):
-        """
-        If `resume==True` and `cfg.OUTPUT_DIR` contains the last checkpoint (defined by
-        a `last_checkpoint` file), resume from the file. Resuming means loading all
-        available states (eg. optimizer and scheduler) and update iteration counter
-        from the checkpoint. ``cfg.MODEL.WEIGHTS`` will not be used.
-
-        Otherwise, this is considered as an independent training. The method will load model
-        weights from the file `cfg.MODEL.WEIGHTS` (but will not load other states) and start
-        from iteration 0.
-
-        Args:
-            resume (bool): whether to do resume or not
-        """
-        checkpoint = self.checkpointer.resume_or_load(self.cfg.MODEL.WEIGHTS, resume=resume)
-        if resume and self.checkpointer.has_checkpoint():
-            self.start_iter = checkpoint.get("iteration", -1) + 1
-            # The checkpoint stores the training iteration that just finished, thus we start
-            # at the next iteration (or iter zero if there's no checkpoint).
-
-        if isinstance(self.model, DistributedDataParallel):
-            # broadcast loaded data/model from the first rank, because other
-            # machines may not have access to the checkpoint file
-            if TORCH_VERSION >= (1, 7):
-                self.model._sync_params_and_buffers()
-            self.start_iter = comm.all_gather(self.start_iter)[0]
-
-        # First iter need load flownet weights
-        if self.start_iter == 0:
-            self.checkpointer.load(self.cfg.MODEL.FLOW_NET.WEIGHTS, checkpointables=[])
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_folder=None):
@@ -95,7 +73,6 @@ class Trainer(BatchSubdivisionTrainer):
             return CityscapesSemSegEvaluator(dataset_name)
         elif evaluator_type == "ilsvrc_vid":
             return ILSVRCVIDEvaluator(dataset_name, output_folder)
-
         if len(evaluator_list) == 0:
             raise NotImplementedError(
                 "no Evaluator for the dataset {} with the type {}".format(
@@ -108,12 +85,12 @@ class Trainer(BatchSubdivisionTrainer):
 
     @classmethod
     def build_train_loader(cls, cfg):
-        mapper = DFFDatasetMapper(cfg, True)
+        mapper = ILSVRCVIDDatasetMapper(cfg, True)
         return build_detection_train_loader(cfg, mapper=mapper)
 
     @classmethod
     def build_test_loader(cls, cfg, dataset_name):
-        mapper = DFFDatasetMapper(cfg, False)
+        mapper = ILSVRCVIDDatasetMapper(cfg, False)
         return build_detection_test_loader(cfg, dataset_name, mapper=mapper)
 
     @classmethod
@@ -146,10 +123,6 @@ def setup(args):
     cfg.merge_from_list(args.opts)
     cfg.freeze()
     default_setup(cfg, args)
-    # setup dff module logger
-    output_dir = cfg.OUTPUT_DIR
-    rank = comm.get_rank()
-    setup_logger(output_dir, distributed_rank=rank, name="dff")
     return cfg
 
 
